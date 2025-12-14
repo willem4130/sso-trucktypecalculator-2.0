@@ -413,19 +413,97 @@ npm run build      # Try build again
 
 ## TCO Calculator Specific
 
+**Design Philosophy:**
+
+- **Target Aesthetic**: Enterprise BI (Tableau/PowerBI/Linear) - NOT consumer-friendly
+- **User Persona**: Data science professionals, fleet managers, logistics analysts
+- **Key Principle**: Information density > Simplicity, Professional > Playful
+
 **Design System:**
 
 - SCEX Brand Colors: Orange (#f29100), Navy (#08192c)
-- Premium animations: slide-in-right, slide-in-left, fade-in, scale-in, bounce-subtle
+- Professional UI: Muted grays, minimal rounded corners, clean borders
+- Typography: Tabular numbers, uppercase labels, professional hierarchy
 - Fuel type colors: Diesel (indigo), BEV (green), FCEV (cyan), H2ICE (purple)
 - Cost indicators: Low (green), Medium (amber), High (red)
+- Animations: Subtle, fast (prefer fade over slide)
 
-**Key Features:**
+**Current Features (v2.0):**
 
-- 4-step wizard: Vehicle Selection → Driving Area → Parameters (6 tabs) → Results
-- Compare 4 fuel types: Diesel, BEV, FCEV, H2ICE
-- Parameters: Vehicle characteristics, Consumption, Taxes, Subsidies, Financial, Extra
-- Results: TCO breakdown, CO2 emissions, Charts (Recharts), PDF export (jsPDF)
+✅ **Step 1: Vehicle Selection**
+
+- 6 vehicle types in grid layout
+- Basic specs (GVW, payload)
+
+✅ **Step 2: Driving Area Selection** (ENHANCED - Professional BI Dashboard)
+
+- Left sidebar: Table-style area selection (4 areas)
+- Right dashboard: 3 KPI cards + 4 charts
+- Charts: Bar (km/year), Radar (multi-dimensional), Area (cumulative), Process Flow
+- Progressive disclosure: Details panel shows on selection
+- Interactive: Hover states highlight across all visualizations
+- Professional aesthetic: Clean borders, muted colors, uppercase headers
+
+✅ **Step 3: Parameters**
+
+- 6-tab form (Vehicle, Consumption, Taxes, Subsidies, Financial, Extra)
+- Smart defaults, auto-fill on fuel type change
+- Inline validation with tab badges
+
+✅ **Step 4: Results**
+
+- 5 visualizations: TCO bar chart, Cost breakdown pie, CO2 emissions, Breakdown table
+- PDF export (jsPDF)
+
+**Enhanced Roadmap (v2.1+):**
+
+🎯 **Progressive Disclosure (High Priority)**
+
+- Beginner/Expert mode toggle
+- Collapsible advanced sections
+- Context-aware tooltips
+- "Show calculations" expandable panels
+- Guided vs. Full control modes
+
+🎯 **Live Cost Preview (High Priority)**
+
+- Step 3: Real-time TCO chart updates as user types
+- Mini dashboard in sidebar showing running totals
+- Instant feedback on parameter changes
+- Cost sensitivity indicators
+
+🎯 **Interactive Route Optimization (Medium Priority)**
+
+- Netherlands map with draggable waypoints
+- Real-time distance calculation
+- Route efficiency visualization
+- Fuel consumption heat maps
+- Coverage area overlays
+- Stop/waypoint management
+
+🎯 **Enhanced Analytics (Medium Priority)**
+
+- Scenario comparison (side-by-side)
+- Historical trend analysis
+- Break-even analysis
+- Sensitivity analysis (tornado charts)
+- Monte Carlo simulation for uncertainty
+
+🎯 **Step 1 Enhancement (Low Priority)**
+
+- Vehicle comparison matrix
+- Side-by-side specs table
+- Visual vehicle illustrations
+
+**Technical Implementation Notes:**
+
+- All charts use Recharts with professional styling
+- Process flow diagrams show calculation methodology
+- Data tables use monospace fonts for numbers
+- Uppercase tracking-wide labels for section headers
+- Subtle borders (gray-200) not gradients
+- White/gray-900 backgrounds only
+- Interactive states: hover affects multiple connected visualizations
 
 **Reference Materials:**
 
