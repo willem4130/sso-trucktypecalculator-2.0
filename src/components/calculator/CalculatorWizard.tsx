@@ -33,6 +33,7 @@ export function CalculatorWizard() {
     onSuccess: async () => {
       // Invalidate and refetch session to get updated data
       await utils.calculator.getOrCreateSession.invalidate()
+      await utils.calculator.getOrCreateSession.refetch()
     },
     onError: (error: { message: string }) => {
       toast.error('Failed to save progress', {
@@ -113,6 +114,9 @@ export function CalculatorWizard() {
       step: currentStep < 4 ? currentStep + 1 : currentStep,
       ...data,
     })
+
+    // Ensure session is refetched with updated data
+    await utils.calculator.getOrCreateSession.refetch()
 
     if (currentStep < 4) {
       setCurrentStep((prev) => prev + 1)
