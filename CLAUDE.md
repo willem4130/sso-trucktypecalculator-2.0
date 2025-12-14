@@ -430,25 +430,46 @@ npm run build      # Try build again
 
 **Current Features (v2.0):**
 
-✅ **Step 1: Vehicle Selection**
+✅ **Step 1: Vehicle Selection** (ENHANCED - Professional BI Comparison Matrix)
 
-- 6 vehicle types in grid layout
-- Basic specs (GVW, payload)
+- Left panel: Professional comparison table with sortable columns
+  - Sortable by: Vehicle type, GVW, Payload (3-state sort: asc/desc/none)
+  - Row-based selection with orange highlight
+  - Table footer with vehicle count
+  - Responsive design (description column hidden on mobile)
+- Right panel: Detailed vehicle specifications
+  - Vehicle overview card with illustration placeholder
+  - Technical specifications table (GVW, Payload, Empty weight, Category)
+  - Comparison metrics (Weight class bar, Payload ratio bar)
+  - Continue button
+- Professional BI styling: Uppercase headers, tabular numbers, clean borders
+- Empty state when no vehicle selected
+- Full desktop width (8/4 column split)
 
 ✅ **Step 2: Driving Area Selection** (ENHANCED - Professional BI Dashboard)
 
 - Left sidebar: Table-style area selection (4 areas)
-- Right dashboard: 3 KPI cards + 4 charts
+- Right dashboard: 3 KPI cards + 7 charts (Bar, Radar, Area, Process Flow, Netherlands Map)
+- **Progressive Disclosure**: View mode toggle (Simpel/Gedetailleerd/Expert)
+  - Simpel: Map + selection only
+  - Gedetailleerd: Full BI dashboard (DEFAULT)
+  - Expert: Everything + future advanced analytics
 - Charts: Bar (km/year), Radar (multi-dimensional), Area (cumulative), Process Flow
-- Progressive disclosure: Details panel shows on selection
+- Real Netherlands GeoJSON map with coverage zones
 - Interactive: Hover states highlight across all visualizations
 - Professional aesthetic: Clean borders, muted colors, uppercase headers
 
-✅ **Step 3: Parameters**
+✅ **Step 3: Parameters** (ENHANCED - Live Cost Preview)
 
 - 6-tab form (Vehicle, Consumption, Taxes, Subsidies, Financial, Extra)
 - Smart defaults, auto-fill on fuel type change
 - Inline validation with tab badges
+- **Live TCO Preview Sidebar**: Real-time cost calculation as user types
+  - Annual & lifetime TCO KPIs
+  - Cost breakdown bar chart (6 categories)
+  - Detailed cost table with color-coded categories
+  - Sticky sidebar follows scroll
+  - Updates instantly on any parameter change
 
 ✅ **Step 4: Results**
 
@@ -457,20 +478,19 @@ npm run build      # Try build again
 
 **Enhanced Roadmap (v2.1+):**
 
-🎯 **Progressive Disclosure (High Priority)**
+✅ **Progressive Disclosure** (COMPLETED)
 
-- Beginner/Expert mode toggle
-- Collapsible advanced sections
-- Context-aware tooltips
-- "Show calculations" expandable panels
-- Guided vs. Full control modes
+- ✅ View mode toggle in Step 2 (Simpel/Gedetailleerd/Expert)
+- Future: Collapsible advanced sections in other steps
+- Future: Context-aware tooltips
+- Future: "Show calculations" expandable panels
 
-🎯 **Live Cost Preview (High Priority)**
+✅ **Live Cost Preview** (COMPLETED)
 
-- Step 3: Real-time TCO chart updates as user types
-- Mini dashboard in sidebar showing running totals
-- Instant feedback on parameter changes
-- Cost sensitivity indicators
+- ✅ Step 3: Real-time TCO chart updates as user types
+- ✅ Mini dashboard in sidebar showing running totals
+- ✅ Instant feedback on parameter changes
+- Future: Cost sensitivity indicators (tornado charts)
 
 🎯 **Interactive Route Optimization (Medium Priority)**
 
@@ -489,11 +509,13 @@ npm run build      # Try build again
 - Sensitivity analysis (tornado charts)
 - Monte Carlo simulation for uncertainty
 
-🎯 **Step 1 Enhancement (Low Priority)**
+✅ **Step 1 BI Enhancement** (COMPLETED)
 
-- Vehicle comparison matrix
-- Side-by-side specs table
-- Visual vehicle illustrations
+- ✅ Professional comparison table with sortable columns
+- ✅ Detailed specs panel with technical specifications
+- ✅ Comparison metrics (weight class, payload ratio)
+- ✅ Full desktop width utilization
+- Future: Real vehicle illustrations (currently placeholder)
 
 **Technical Implementation Notes:**
 
