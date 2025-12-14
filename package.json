@@ -38,6 +38,7 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
+    "db:seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate",
     "prepare": "husky",
     "lint-staged": "lint-staged"
@@ -133,5 +134,8 @@
     "tsx": "^4.20.6",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^4.0.8"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
