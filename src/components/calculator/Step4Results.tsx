@@ -120,12 +120,56 @@ export function Step4Results({ session }: Step4Props) {
   const [timelineChartType, setTimelineChartType] = useState<TimelineChartType>('line')
   const [showExportDialog, setShowExportDialog] = useState(false)
   const [exportOptions, setExportOptions] = useState({
-    kpis: true,
-    comparison: true,
-    breakdown: true,
-    timeline: true,
-    detailed: true,
-    insights: true,
+    // Executive Summary
+    executiveSummary: {
+      enabled: true,
+      coverPage: true,
+      keyFindings: true,
+      recommendations: true,
+    },
+    // Specifications
+    specifications: {
+      enabled: true,
+      vehicleDetails: true,
+      drivingArea: true,
+      parameters: true,
+    },
+    // CFO Dashboard
+    cfoDashboard: {
+      enabled: true,
+      capexOpex: true,
+      cashFlowChart: true,
+      breakEvenAnalysis: true,
+    },
+    // Cost Analysis
+    costAnalysis: {
+      enabled: true,
+      comparisonTable: true,
+      comparisonChart: true,
+      costBreakdownChart: true,
+      detailedBreakdown: true,
+    },
+    // Timeline & Projection
+    timeline: {
+      enabled: true,
+      annualCosts: true,
+      cumulativeCashFlow: true,
+      depreciationSchedule: true,
+    },
+    // Environmental Impact
+    environmental: {
+      enabled: true,
+      co2Comparison: true,
+      emissionsChart: true,
+      sustainabilityScore: true,
+    },
+    // Insights & Recommendations
+    insights: {
+      enabled: true,
+      savings: true,
+      roi: true,
+      riskFactors: true,
+    },
   })
 
   // Multi-vehicle comparison state
@@ -395,12 +439,23 @@ export function Step4Results({ session }: Step4Props) {
       results: resultsArray,
     }
 
+    // Map new nested options to legacy format for export functions
+    const legacyOptions = {
+      kpis: exportOptions.executiveSummary.enabled && exportOptions.executiveSummary.keyFindings,
+      comparison: exportOptions.costAnalysis.enabled && exportOptions.costAnalysis.comparisonTable,
+      breakdown:
+        exportOptions.costAnalysis.enabled && exportOptions.costAnalysis.costBreakdownChart,
+      timeline: exportOptions.timeline.enabled && exportOptions.timeline.cumulativeCashFlow,
+      detailed: exportOptions.costAnalysis.enabled && exportOptions.costAnalysis.detailedBreakdown,
+      insights: exportOptions.insights.enabled,
+    }
+
     // Call the appropriate export function
     try {
       if (format === 'pdf') {
-        exportToPDF(exportData, exportOptions)
+        exportToPDF(exportData, legacyOptions)
       } else {
-        exportToExcel(exportData, exportOptions)
+        exportToExcel(exportData, legacyOptions)
       }
     } catch (error) {
       console.error('Export failed:', error)
@@ -2178,47 +2233,450 @@ export function Step4Results({ session }: Step4Props) {
                 </button>
               </div>
 
-              <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                Selecteer welke secties je wilt exporteren
+              <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+                Selecteer welke secties je wilt exporteren - perfect voor C-level rapportage
               </p>
 
-              <div className="space-y-3">
-                {[
-                  { key: 'kpis', label: 'KPI Samenvatting', icon: '📊' },
-                  { key: 'comparison', label: 'Kostenvergelijking Tabel', icon: '📈' },
-                  { key: 'breakdown', label: 'Kostenverdeling Grafiek', icon: '🔧' },
-                  { key: 'timeline', label: 'Jaarlijkse Opbouw', icon: '📅' },
-                  { key: 'detailed', label: 'Gedetailleerde Specificatie', icon: '📋' },
-                  { key: 'insights', label: 'Besparing & Milieu-impact', icon: '💡' },
-                ].map(({ key, label, icon }) => (
-                  <label
-                    key={key}
-                    className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
-                  >
+              {/* Quick Actions */}
+              <div className="mb-4 flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const allEnabled = Object.fromEntries(
+                      Object.entries(exportOptions).map(([key, section]) => [
+                        key,
+                        typeof section === 'object'
+                          ? {
+                              ...section,
+                              enabled: true,
+                              ...Object.fromEntries(
+                                Object.keys(section)
+                                  .filter((k) => k !== 'enabled')
+                                  .map((k) => [k, true])
+                              ),
+                            }
+                          : true,
+                      ])
+                    ) as typeof exportOptions
+                    setExportOptions(allEnabled)
+                  }}
+                  className="text-xs"
+                >
+                  Alles selecteren
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const allDisabled = Object.fromEntries(
+                      Object.entries(exportOptions).map(([key, section]) => [
+                        key,
+                        typeof section === 'object'
+                          ? {
+                              ...section,
+                              enabled: false,
+                              ...Object.fromEntries(
+                                Object.keys(section)
+                                  .filter((k) => k !== 'enabled')
+                                  .map((k) => [k, false])
+                              ),
+                            }
+                          : false,
+                      ])
+                    ) as typeof exportOptions
+                    setExportOptions(allDisabled)
+                  }}
+                  className="text-xs"
+                >
+                  Alles deselecteren
+                </Button>
+              </div>
+
+              {/* Scrollable Sections */}
+              <div className="max-h-[60vh] space-y-2 overflow-y-auto pr-2">
+                {/* Executive Summary */}
+                <div className="rounded-lg border border-gray-200 dark:border-gray-700">
+                  <label className="flex cursor-pointer items-center gap-3 border-b border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
                     <input
                       type="checkbox"
-                      checked={exportOptions[key as keyof typeof exportOptions]}
+                      checked={exportOptions.executiveSummary.enabled}
                       onChange={(e) =>
                         setExportOptions((prev) => ({
                           ...prev,
-                          [key]: e.target.checked,
+                          executiveSummary: { ...prev.executiveSummary, enabled: e.target.checked },
                         }))
                       }
-                      className="h-4 w-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+                      className="h-4 w-4 rounded border-gray-300 text-orange-500"
                     />
-                    <span className="text-2xl">{icon}</span>
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {label}
+                    <span className="text-lg">📋</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      Executive Summary
                     </span>
                   </label>
-                ))}
+                  {exportOptions.executiveSummary.enabled && (
+                    <div className="space-y-1 p-2">
+                      {[
+                        { key: 'coverPage', label: 'Cover Page met branding' },
+                        { key: 'keyFindings', label: 'Key Findings & KPIs' },
+                        { key: 'recommendations', label: 'Strategische aanbevelingen' },
+                      ].map(({ key, label }) => (
+                        <label
+                          key={key}
+                          className="flex cursor-pointer items-center gap-2 rounded p-2 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={
+                              exportOptions.executiveSummary[
+                                key as keyof typeof exportOptions.executiveSummary
+                              ] as boolean
+                            }
+                            onChange={(e) =>
+                              setExportOptions((prev) => ({
+                                ...prev,
+                                executiveSummary: {
+                                  ...prev.executiveSummary,
+                                  [key]: e.target.checked,
+                                },
+                              }))
+                            }
+                            className="h-3 w-3 rounded border-gray-300 text-orange-500"
+                          />
+                          <span className="text-xs text-gray-700 dark:text-gray-300">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Specifications */}
+                <div className="rounded-lg border border-gray-200 dark:border-gray-700">
+                  <label className="flex cursor-pointer items-center gap-3 border-b border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
+                    <input
+                      type="checkbox"
+                      checked={exportOptions.specifications.enabled}
+                      onChange={(e) =>
+                        setExportOptions((prev) => ({
+                          ...prev,
+                          specifications: { ...prev.specifications, enabled: e.target.checked },
+                        }))
+                      }
+                      className="h-4 w-4 rounded border-gray-300 text-orange-500"
+                    />
+                    <span className="text-lg">🚛</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      Specificaties & Parameters
+                    </span>
+                  </label>
+                  {exportOptions.specifications.enabled && (
+                    <div className="space-y-1 p-2">
+                      {[
+                        {
+                          key: 'vehicleDetails',
+                          label: 'Voertuig specificaties (GVW, payload, etc.)',
+                        },
+                        { key: 'drivingArea', label: 'Rijgebied details & km/jaar' },
+                        { key: 'parameters', label: 'Alle input parameters' },
+                      ].map(({ key, label }) => (
+                        <label
+                          key={key}
+                          className="flex cursor-pointer items-center gap-2 rounded p-2 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={
+                              exportOptions.specifications[
+                                key as keyof typeof exportOptions.specifications
+                              ] as boolean
+                            }
+                            onChange={(e) =>
+                              setExportOptions((prev) => ({
+                                ...prev,
+                                specifications: { ...prev.specifications, [key]: e.target.checked },
+                              }))
+                            }
+                            className="h-3 w-3 rounded border-gray-300 text-orange-500"
+                          />
+                          <span className="text-xs text-gray-700 dark:text-gray-300">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* CFO Dashboard */}
+                <div className="rounded-lg border border-orange-200 bg-orange-50/30 dark:border-orange-900 dark:bg-orange-950/20">
+                  <label className="flex cursor-pointer items-center gap-3 border-b border-orange-200 bg-orange-100/50 p-3 dark:border-orange-900 dark:bg-orange-950/40">
+                    <input
+                      type="checkbox"
+                      checked={exportOptions.cfoDashboard.enabled}
+                      onChange={(e) =>
+                        setExportOptions((prev) => ({
+                          ...prev,
+                          cfoDashboard: { ...prev.cfoDashboard, enabled: e.target.checked },
+                        }))
+                      }
+                      className="h-4 w-4 rounded border-gray-300 text-orange-500"
+                    />
+                    <span className="text-lg">💰</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      CFO Dashboard (AANBEVOLEN)
+                    </span>
+                  </label>
+                  {exportOptions.cfoDashboard.enabled && (
+                    <div className="space-y-1 p-2">
+                      {[
+                        { key: 'capexOpex', label: 'CAPEX vs OPEX vergelijking' },
+                        { key: 'cashFlowChart', label: 'Cumulatieve cashflow projectie' },
+                        { key: 'breakEvenAnalysis', label: 'Break-even analyse' },
+                      ].map(({ key, label }) => (
+                        <label
+                          key={key}
+                          className="flex cursor-pointer items-center gap-2 rounded p-2 hover:bg-orange-100/30 dark:hover:bg-orange-950/30"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={
+                              exportOptions.cfoDashboard[
+                                key as keyof typeof exportOptions.cfoDashboard
+                              ] as boolean
+                            }
+                            onChange={(e) =>
+                              setExportOptions((prev) => ({
+                                ...prev,
+                                cfoDashboard: { ...prev.cfoDashboard, [key]: e.target.checked },
+                              }))
+                            }
+                            className="h-3 w-3 rounded border-gray-300 text-orange-500"
+                          />
+                          <span className="text-xs text-gray-700 dark:text-gray-300">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Cost Analysis */}
+                <div className="rounded-lg border border-gray-200 dark:border-gray-700">
+                  <label className="flex cursor-pointer items-center gap-3 border-b border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
+                    <input
+                      type="checkbox"
+                      checked={exportOptions.costAnalysis.enabled}
+                      onChange={(e) =>
+                        setExportOptions((prev) => ({
+                          ...prev,
+                          costAnalysis: { ...prev.costAnalysis, enabled: e.target.checked },
+                        }))
+                      }
+                      className="h-4 w-4 rounded border-gray-300 text-orange-500"
+                    />
+                    <span className="text-lg">📊</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      Kostenanalyse & Vergelijking
+                    </span>
+                  </label>
+                  {exportOptions.costAnalysis.enabled && (
+                    <div className="space-y-1 p-2">
+                      {[
+                        { key: 'comparisonTable', label: 'Vergelijkingstabel (alle fuel types)' },
+                        { key: 'comparisonChart', label: 'TCO vergelijkingsgrafiek (bar chart)' },
+                        {
+                          key: 'costBreakdownChart',
+                          label: 'Kostenverdeling grafiek (stacked bar)',
+                        },
+                        {
+                          key: 'detailedBreakdown',
+                          label: 'Gedetailleerde specificatie per fuel type',
+                        },
+                      ].map(({ key, label }) => (
+                        <label
+                          key={key}
+                          className="flex cursor-pointer items-center gap-2 rounded p-2 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={
+                              exportOptions.costAnalysis[
+                                key as keyof typeof exportOptions.costAnalysis
+                              ] as boolean
+                            }
+                            onChange={(e) =>
+                              setExportOptions((prev) => ({
+                                ...prev,
+                                costAnalysis: { ...prev.costAnalysis, [key]: e.target.checked },
+                              }))
+                            }
+                            className="h-3 w-3 rounded border-gray-300 text-orange-500"
+                          />
+                          <span className="text-xs text-gray-700 dark:text-gray-300">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Timeline & Projection */}
+                <div className="rounded-lg border border-gray-200 dark:border-gray-700">
+                  <label className="flex cursor-pointer items-center gap-3 border-b border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
+                    <input
+                      type="checkbox"
+                      checked={exportOptions.timeline.enabled}
+                      onChange={(e) =>
+                        setExportOptions((prev) => ({
+                          ...prev,
+                          timeline: { ...prev.timeline, enabled: e.target.checked },
+                        }))
+                      }
+                      className="h-4 w-4 rounded border-gray-300 text-orange-500"
+                    />
+                    <span className="text-lg">📈</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      Timeline & Projecties
+                    </span>
+                  </label>
+                  {exportOptions.timeline.enabled && (
+                    <div className="space-y-1 p-2">
+                      {[
+                        { key: 'annualCosts', label: 'Jaarlijkse kostenopbouw' },
+                        { key: 'cumulativeCashFlow', label: 'Cumulatieve cashflow grafiek' },
+                        { key: 'depreciationSchedule', label: 'Afschrijvingsschema' },
+                      ].map(({ key, label }) => (
+                        <label
+                          key={key}
+                          className="flex cursor-pointer items-center gap-2 rounded p-2 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={
+                              exportOptions.timeline[
+                                key as keyof typeof exportOptions.timeline
+                              ] as boolean
+                            }
+                            onChange={(e) =>
+                              setExportOptions((prev) => ({
+                                ...prev,
+                                timeline: { ...prev.timeline, [key]: e.target.checked },
+                              }))
+                            }
+                            className="h-3 w-3 rounded border-gray-300 text-orange-500"
+                          />
+                          <span className="text-xs text-gray-700 dark:text-gray-300">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Environmental Impact */}
+                <div className="rounded-lg border border-gray-200 dark:border-gray-700">
+                  <label className="flex cursor-pointer items-center gap-3 border-b border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
+                    <input
+                      type="checkbox"
+                      checked={exportOptions.environmental.enabled}
+                      onChange={(e) =>
+                        setExportOptions((prev) => ({
+                          ...prev,
+                          environmental: { ...prev.environmental, enabled: e.target.checked },
+                        }))
+                      }
+                      className="h-4 w-4 rounded border-gray-300 text-orange-500"
+                    />
+                    <span className="text-lg">🌱</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      Milieu-impact & Duurzaamheid
+                    </span>
+                  </label>
+                  {exportOptions.environmental.enabled && (
+                    <div className="space-y-1 p-2">
+                      {[
+                        { key: 'co2Comparison', label: 'CO2-uitstoot vergelijking' },
+                        { key: 'emissionsChart', label: 'Emissies grafiek (CO2, NOx, fijnstof)' },
+                        { key: 'sustainabilityScore', label: 'Duurzaamheidsscore & badges' },
+                      ].map(({ key, label }) => (
+                        <label
+                          key={key}
+                          className="flex cursor-pointer items-center gap-2 rounded p-2 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={
+                              exportOptions.environmental[
+                                key as keyof typeof exportOptions.environmental
+                              ] as boolean
+                            }
+                            onChange={(e) =>
+                              setExportOptions((prev) => ({
+                                ...prev,
+                                environmental: { ...prev.environmental, [key]: e.target.checked },
+                              }))
+                            }
+                            className="h-3 w-3 rounded border-gray-300 text-orange-500"
+                          />
+                          <span className="text-xs text-gray-700 dark:text-gray-300">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Insights & Recommendations */}
+                <div className="rounded-lg border border-gray-200 dark:border-gray-700">
+                  <label className="flex cursor-pointer items-center gap-3 border-b border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
+                    <input
+                      type="checkbox"
+                      checked={exportOptions.insights.enabled}
+                      onChange={(e) =>
+                        setExportOptions((prev) => ({
+                          ...prev,
+                          insights: { ...prev.insights, enabled: e.target.checked },
+                        }))
+                      }
+                      className="h-4 w-4 rounded border-gray-300 text-orange-500"
+                    />
+                    <span className="text-lg">💡</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      Inzichten & Aanbevelingen
+                    </span>
+                  </label>
+                  {exportOptions.insights.enabled && (
+                    <div className="space-y-1 p-2">
+                      {[
+                        { key: 'savings', label: 'Besparingsanalyse vs Diesel' },
+                        { key: 'roi', label: 'ROI berekening & terugverdientijd' },
+                        { key: 'riskFactors', label: 'Risicofactoren & overwegingen' },
+                      ].map(({ key, label }) => (
+                        <label
+                          key={key}
+                          className="flex cursor-pointer items-center gap-2 rounded p-2 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={
+                              exportOptions.insights[
+                                key as keyof typeof exportOptions.insights
+                              ] as boolean
+                            }
+                            onChange={(e) =>
+                              setExportOptions((prev) => ({
+                                ...prev,
+                                insights: { ...prev.insights, [key]: e.target.checked },
+                              }))
+                            }
+                            className="h-3 w-3 rounded border-gray-300 text-orange-500"
+                          />
+                          <span className="text-xs text-gray-700 dark:text-gray-300">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="mt-6 flex gap-3">
                 <Button
                   onClick={() => confirmExport('pdf')}
                   className="flex-1 gap-2 bg-orange-500 hover:bg-orange-600"
-                  disabled={!Object.values(exportOptions).some((v) => v)}
                 >
                   <Download className="h-4 w-4" />
                   Exporteer PDF
@@ -2227,7 +2685,6 @@ export function Step4Results({ session }: Step4Props) {
                   onClick={() => confirmExport('excel')}
                   variant="outline"
                   className="flex-1 gap-2 border-orange-500 text-orange-600 hover:bg-orange-50"
-                  disabled={!Object.values(exportOptions).some((v) => v)}
                 >
                   <FileSpreadsheet className="h-4 w-4" />
                   Exporteer Excel
