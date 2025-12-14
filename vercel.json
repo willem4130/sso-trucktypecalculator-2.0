@@ -1,7 +1,8 @@
 {
   "buildCommand": "prisma db push --accept-data-loss && prisma generate && next build",
   "env": {
-    "SKIP_ENV_VALIDATION": "true"
+    "SKIP_ENV_VALIDATION": "true",
+    "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "1"
   },
   "installCommand": "npm install",
   "framework": "nextjs",
