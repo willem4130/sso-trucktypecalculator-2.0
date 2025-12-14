@@ -70,6 +70,17 @@ interface ResultData {
   }
 }
 
+// Colors for pie chart slices
+const PIE_COLORS = {
+  purchaseCost: '#3b82f6', // blue
+  fuelCost: '#f29100', // orange
+  maintenanceCost: '#10b981', // green
+  taxesCost: '#ef4444', // red
+  insuranceCost: '#8b5cf6', // purple
+  interestCost: '#f59e0b', // amber
+  subsidyCredit: '#22c55e', // bright green
+}
+
 export function Step4Results({ session }: Step4Props) {
   const results = session.resultsData as Record<string, ResultData> | null
 
@@ -97,6 +108,57 @@ export function Step4Results({ session }: Step4Props) {
     name: fuelTypeLabels[result.fuelType as FuelType],
     'TCO (€)': Math.round(result.totalCost),
     'Kosten/km (€)': parseFloat(result.costPerKm.toFixed(2)),
+  }))
+
+  // Prepare pie chart data for the lowest cost fuel type
+  const lowestCostResult = resultsArray[0]
+  const pieData = lowestCostResult
+    ? [
+        {
+          name: 'Aankoopprijs',
+          value: lowestCostResult.breakdown.purchaseCost,
+          color: PIE_COLORS.purchaseCost,
+        },
+        {
+          name: 'Brandstof',
+          value: lowestCostResult.breakdown.fuelCost,
+          color: PIE_COLORS.fuelCost,
+        },
+        {
+          name: 'Onderhoud',
+          value: lowestCostResult.breakdown.maintenanceCost,
+          color: PIE_COLORS.maintenanceCost,
+        },
+        {
+          name: 'Belastingen',
+          value: lowestCostResult.breakdown.taxesCost,
+          color: PIE_COLORS.taxesCost,
+        },
+        {
+          name: 'Verzekering',
+          value: lowestCostResult.breakdown.insuranceCost,
+          color: PIE_COLORS.insuranceCost,
+        },
+        {
+          name: 'Rente',
+          value: lowestCostResult.breakdown.interestCost,
+          color: PIE_COLORS.interestCost,
+        },
+      ].filter((item) => item.value > 0)
+    : []
+
+  // Prepare CO2 emissions chart data
+  const co2Data = resultsArray.map((result) => ({
+    name: fuelTypeLabels[result.fuelType as FuelType],
+    'CO2 (kg)': result.co2Emissions,
+    fill:
+      fuelTypeColors[result.fuelType as FuelType] === 'indigo'
+        ? '#6366f1'
+        : fuelTypeColors[result.fuelType as FuelType] === 'green'
+          ? '#10b981'
+          : fuelTypeColors[result.fuelType as FuelType] === 'cyan'
+            ? '#06b6d4'
+            : '#a855f7',
   }))
 
   // Get depreciation years from parameters
@@ -215,11 +277,11 @@ export function Step4Results({ session }: Step4Props) {
       </div>
 
       {/* Cost Breakdown Chart */}
-      <Card className="p-6">
-        <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+      <Card className="p-4">
+        <h3 className="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
           TCO Vergelijking Grafiek
         </h3>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={200}>
           <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
@@ -235,9 +297,66 @@ export function Step4Results({ session }: Step4Props) {
         </ResponsiveContainer>
       </Card>
 
+      {/* Cost Breakdown Pie Chart */}
+      <Card className="p-4">
+        <h3 className="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
+          Kostenverdeling -{' '}
+          {lowestCostResult ? fuelTypeLabels[lowestCostResult.fuelType as FuelType] : ''} (Laagste
+          TCO)
+        </h3>
+        <ResponsiveContainer width="100%" height={250}>
+          <PieChart>
+            <Pie
+              data={pieData}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+              label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
+              outerRadius={80}
+              fill="#8884d8"
+              dataKey="value"
+            >
+              {pieData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Pie>
+            <Tooltip
+              formatter={(value: number) =>
+                `€${value.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}`
+              }
+            />
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
+      </Card>
+
+      {/* CO2 Emissions Comparison */}
+      <Card className="p-4">
+        <h3 className="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
+          CO2 Uitstoot Vergelijking
+        </h3>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={co2Data}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+            <YAxis tick={{ fontSize: 12 }} />
+            <Tooltip
+              formatter={(value: number) =>
+                `${value.toLocaleString('nl-NL', { maximumFractionDigits: 0 })} kg`
+              }
+            />
+            <Bar dataKey="CO2 (kg)" radius={[8, 8, 0, 0]}>
+              {co2Data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.fill} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </Card>
+
       {/* Detailed Breakdown Table */}
-      <Card className="p-6">
-        <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+      <Card className="p-4">
+        <h3 className="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
           Gedetailleerde Kostenverdeling
         </h3>
         <div className="overflow-x-auto">
