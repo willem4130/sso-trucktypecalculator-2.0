@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -73,6 +73,37 @@ const fuelTypeUnits: Record<FuelType, string> = {
   bev: 'kWh/100km',
   fcev: 'kg/100km',
   h2ice: 'kg/100km',
+}
+
+// Smart defaults based on fuel type (2026 data)
+const fuelTypeDefaults: Record<
+  FuelType,
+  {
+    consumption: number
+    truckToll: number
+    subsidy: number
+  }
+> = {
+  diesel: {
+    consumption: 28, // L/100km typical for heavy trucks
+    truckToll: 2820.8, // 2026 diesel rate
+    subsidy: 0, // No subsidy for diesel
+  },
+  bev: {
+    consumption: 120, // kWh/100km typical for electric trucks
+    truckToll: 537.6, // 2026 BEV rate
+    subsidy: 10000, // €10k subsidy for BEV
+  },
+  fcev: {
+    consumption: 8, // kg/100km typical for fuel cell trucks
+    truckToll: 537.6, // 2026 FCEV rate (same as BEV)
+    subsidy: 15000, // €15k subsidy for FCEV
+  },
+  h2ice: {
+    consumption: 12, // kg/100km typical for H2 combustion
+    truckToll: 537.6, // 2026 H2ICE rate (same as BEV)
+    subsidy: 5000, // €5k subsidy for H2ICE
+  },
 }
 
 // Tab configuration with required fields
@@ -154,6 +185,19 @@ export function Step3Parameters({ session, onComplete }: Step3Props) {
       })
     },
   })
+
+  // Auto-fill fields when fuel type changes
+  useEffect(() => {
+    const defaults = fuelTypeDefaults[formData.fuelType]
+
+    // Only auto-fill if fields are empty or were previously auto-filled
+    setFormData((prev) => ({
+      ...prev,
+      consumption: prev.consumption || defaults.consumption.toString(),
+      truckToll: prev.truckToll || defaults.truckToll.toString(),
+      subsidy: prev.subsidy === '0' || !prev.subsidy ? defaults.subsidy.toString() : prev.subsidy,
+    }))
+  }, [formData.fuelType])
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
