@@ -1,29 +1,36 @@
-# Next.js Fullstack Template
+# TCO Truck Calculator 2.0
 
-Minimal, production-ready Next.js template with tRPC, Prisma, and shadcn/ui. Built for rapid fullstack development.
+World-class TCO (Total Cost of Ownership) calculator for trucks. Compare Diesel, BEV, FCEV, and H2ICE options with premium UI/UX that rivals Apple/Linear/Vercel quality.
 
-**Stack**: Next.js 16 + tRPC + Prisma + PostgreSQL + shadcn/ui + TypeScript
+**Stack**: Next.js 16 + tRPC + Prisma + PostgreSQL + shadcn/ui + Tailwind + Recharts + Framer Motion
+
+**Brand**: SCEX Software Optimization
 
 ## Quick Start
+
+**IMPORTANT: Use Production-Ready Databases from Day 1**
+
+We use Vercel Postgres for both development and production - NO local databases that need migration later.
 
 ```bash
 # Install dependencies
 npm install
 
-# Set up environment variables
-cp .env.example .env
+# Set up Vercel Postgres
+vercel env pull .env.local  # Pull production database credentials
+# OR manually add DATABASE_URL and DIRECT_URL from Vercel dashboard
 
-# Update DATABASE_URL in .env, then push schema
+# Push schema to Vercel Postgres
 npm run db:push
 
-# Seed the database
-npx prisma db seed
+# Seed the database with vehicle types, driving areas, and 2026 tax rates
+npm run db:seed
 
 # Start development server
 npm run dev
 ```
 
-Visit `http://localhost:3000` to see your app!
+Visit `http://localhost:3000` to see the TCO calculator!
 
 ## Project Structure
 
@@ -54,13 +61,22 @@ src/
 ## Database Models
 
 **Authentication** (NextAuth):
+
 - `User` - User accounts with email & role
 - `Account` - OAuth provider accounts
 - `Session` - Active user sessions
 - `VerificationToken` - Email verification tokens
 
 **Application**:
+
 - `AppSettings` - Global app configuration
+
+**TCO Calculator** (6 models):
+
+- `VehicleType` - 6 vehicle categories (Kleine/Medium/Grote Bakwagen, Bouwvoertuig, Lichte/Zware Trekker)
+- `DrivingArea` - 4 driving areas (Regionaal, Nationaal, Nationaal+, Internationaal)
+- `CalculationSession` - User calculation sessions with step data (vehicle selection, driving area, parameters)
+- `CalculationPreset` - Default values and tax rates (2026: motor tax €345/year, truck toll diesel €2820.80, BEV €537.60)
 
 ## Code Quality - Run After Every Edit
 
@@ -78,6 +94,7 @@ npm run format:check
 ```
 
 If you make schema changes:
+
 ```bash
 npm run db:push          # Push to database
 npm run db:generate      # Regenerate Prisma client
@@ -125,6 +142,7 @@ Follow these patterns for consistency:
 ### 1. Add a Database Model
 
 Edit `prisma/schema.prisma`:
+
 ```prisma
 model Post {
   id        String   @id @default(cuid())
@@ -139,6 +157,7 @@ model Post {
 ```
 
 Then update the database:
+
 ```bash
 npm run db:push
 npm run db:generate
@@ -147,6 +166,7 @@ npm run db:generate
 ### 2. Create a tRPC Router
 
 Create `src/server/api/routers/posts.ts`:
+
 ```typescript
 import { z } from 'zod'
 import { createTRPCRouter, publicProcedure } from '@/server/api/trpc'
@@ -160,10 +180,12 @@ export const postsRouter = createTRPCRouter({
   }),
 
   create: publicProcedure
-    .input(z.object({
-      title: z.string().min(1),
-      content: z.string(),
-    }))
+    .input(
+      z.object({
+        title: z.string().min(1),
+        content: z.string(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       return await ctx.db.post.create({
         data: {
@@ -176,6 +198,7 @@ export const postsRouter = createTRPCRouter({
 ```
 
 Add to `src/server/api/root.ts`:
+
 ```typescript
 import { postsRouter } from './routers/posts'
 
@@ -224,16 +247,27 @@ npx shadcn@latest add dialog
 
 ## Environment Variables
 
-Required:
-- `DATABASE_URL` - PostgreSQL connection string
-- `DIRECT_URL` - Direct database connection (for migrations)
+**CRITICAL: Use Vercel Postgres - NO Local Databases**
+
+Required (from Vercel Postgres):
+
+- `DATABASE_URL` - Vercel Postgres connection string (pooled)
+- `DIRECT_URL` - Direct Vercel Postgres connection (for migrations)
 - `NEXTAUTH_SECRET` - NextAuth secret (generate with `openssl rand -base64 32`)
 
 Optional:
+
 - `UPSTASH_REDIS_REST_URL` - Redis for rate limiting
 - `UPSTASH_REDIS_REST_TOKEN` - Redis token
 - `RESEND_API_KEY` - Email service (Resend)
 - `SENTRY_DSN` - Error tracking (Sentry)
+
+**Setup Vercel Postgres:**
+
+1. Go to Vercel Dashboard → Storage → Create Database → Postgres
+2. Copy `DATABASE_URL` and `DIRECT_URL` to your `.env.local` file
+3. OR use `vercel env pull .env.local` to auto-download credentials
+4. Same database for dev AND production - no migration needed!
 
 ## Deployment
 
@@ -245,6 +279,7 @@ Optional:
 4. Deploy!
 
 Vercel automatically:
+
 - Installs dependencies
 - Runs `prisma generate` (via `postinstall`)
 - Pushes database schema (via `buildCommand` in `vercel.json`)
@@ -253,15 +288,18 @@ Vercel automatically:
 ### Other Platforms
 
 Requirements:
+
 - Node.js 18+
 - PostgreSQL database
 
 Build command:
+
 ```bash
 prisma db push --accept-data-loss && prisma generate && next build
 ```
 
 Start command:
+
 ```bash
 next start
 ```
@@ -287,6 +325,7 @@ Access at `/admin`:
 - **Settings** (`/admin/settings`) - App configuration (site name, theme, timezone)
 
 Default layout includes:
+
 - Sidebar navigation
 - Mobile-responsive
 - Dark mode support (system/light/dark)
@@ -296,6 +335,7 @@ Default layout includes:
 ### Add Authentication Protection
 
 Use the `protectedProcedure` in tRPC:
+
 ```typescript
 import { protectedProcedure } from '@/server/api/trpc'
 
@@ -313,6 +353,7 @@ export const postsRouter = createTRPCRouter({
 ### Add a Page
 
 Create `src/app/about/page.tsx`:
+
 ```typescript
 export default function AboutPage() {
   return (
@@ -327,6 +368,7 @@ export default function AboutPage() {
 ### Add an API Route
 
 Create `src/app/api/health/route.ts`:
+
 ```typescript
 import { NextResponse } from 'next/server'
 
@@ -338,17 +380,20 @@ export async function GET() {
 ## Troubleshooting
 
 **Type errors after adding models?**
+
 ```bash
 npm run db:generate
 npm run typecheck
 ```
 
 **Database out of sync?**
+
 ```bash
 npm run db:push
 ```
 
 **Build fails?**
+
 ```bash
 npm run typecheck  # Check for type errors first
 npm run lint       # Check for lint errors
@@ -363,8 +408,31 @@ npm run build      # Try build again
 4. **Set up email** - Add Resend for transactional emails
 5. **Deploy** - Push to Vercel or your platform of choice
 
+## TCO Calculator Specific
+
+**Design System:**
+
+- SCEX Brand Colors: Orange (#f29100), Navy (#08192c)
+- Premium animations: slide-in-right, slide-in-left, fade-in, scale-in, bounce-subtle
+- Fuel type colors: Diesel (indigo), BEV (green), FCEV (cyan), H2ICE (purple)
+- Cost indicators: Low (green), Medium (amber), High (red)
+
+**Key Features:**
+
+- 4-step wizard: Vehicle Selection → Driving Area → Parameters (6 tabs) → Results
+- Compare 4 fuel types: Diesel, BEV, FCEV, H2ICE
+- Parameters: Vehicle characteristics, Consumption, Taxes, Subsidies, Financial, Extra
+- Results: TCO breakdown, CO2 emissions, Charts (Recharts), PDF export (jsPDF)
+
+**Reference Materials:**
+
+- Branding assets: `/Branding/` (SCEX logo, SCEXie mascot, color schemes)
+- Screenshots: `/Screenshots/` (9 reference images from original calculator)
+- Original template backup: `/Tech Stack/` (pristine base - DO NOT MODIFY)
+
 ## Support
 
-- Repository: https://github.com/willem4130/nextjs-fullstack-template
-- Issues: https://github.com/willem4130/nextjs-fullstack-template/issues
+- Repository: https://github.com/willem4130/sso-trucktypecalculator-2.0
+- Issues: https://github.com/willem4130/sso-trucktypecalculator-2.0/issues
 - Author: Willem van den Berg <willem@scex.nl>
+- Brand: SCEX Software Optimization
