@@ -6,6 +6,9 @@ World-class TCO (Total Cost of Ownership) calculator for trucks. Compare Diesel,
 
 **Brand**: SCEX Software Optimization
 
+**Repository**: https://github.com/willem4130/sso-trucktypecalculator-2.0.git
+**Vercel Project**: sso-trucktypecalculator-2-0
+
 ## Quick Start
 
 **IMPORTANT: Use Production-Ready Databases from Day 1**

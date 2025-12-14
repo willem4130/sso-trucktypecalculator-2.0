@@ -96,3 +96,116 @@ model AppSettings {
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 }
+
+// ==========================================
+// TCO CALCULATOR MODELS
+// ==========================================
+
+// Vehicle type categories (6 types)
+model VehicleType {
+  id          String   @id @default(cuid())
+  name        String   @unique // e.g., "Kleine Bakwagen", "Medium Bakwagen", etc.
+  description String?
+  imageUrl    String?  // Path to vehicle image
+
+  // Default specifications
+  defaultGvw  Float?   // Gross Vehicle Weight (kg)
+  defaultPayload Float? // Payload capacity (kg)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sessions    CalculationSession[]
+
+  @@index([name])
+}
+
+// Driving area categories (4 areas)
+model DrivingArea {
+  id              String   @id @default(cuid())
+  name            String   @unique // "Regionaal", "Nationaal", "Nationaal+", "Internationaal"
+  description     String?
+
+  // Default km/year for this area
+  defaultKmPerYear Float
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  sessions        CalculationSession[]
+
+  @@index([name])
+}
+
+// User calculation sessions
+model CalculationSession {
+  id          String   @id @default(cuid())
+
+  // Session metadata
+  userId      String?  // Optional - allow anonymous calculations
+  sessionKey  String   @unique @default(cuid()) // For anonymous sessions
+
+  // Step 1: Vehicle Selection
+  vehicleTypeId String?
+  vehicleType   VehicleType? @relation(fields: [vehicleTypeId], references: [id])
+
+  // Step 2: Driving Area
+  drivingAreaId String?
+  drivingArea   DrivingArea? @relation(fields: [drivingAreaId], references: [id])
+
+  // Step 3: Parameters (stored as JSON for flexibility)
+  // Contains 6 tabs: Voertuigkenmerken, Verbruik, Belastingen, Subsidies, Financieel, Extra
+  parametersData Json?
+
+  // Step 4: Results (cached calculation results)
+  resultsData Json?
+
+  // Progress tracking
+  currentStep Int      @default(1) // 1-4
+  isCompleted Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([sessionKey])
+  @@index([vehicleTypeId])
+  @@index([drivingAreaId])
+}
+
+// Default calculation presets and tax rates
+model CalculationPreset {
+  id          String   @id @default(cuid())
+  name        String   @unique // e.g., "2026 Tax Rates"
+  year        Int      // Tax year (e.g., 2026)
+  isActive    Boolean  @default(false) // Only one active preset at a time
+
+  // Tax rates
+  motorTaxPerYear       Float  // Motor tax (€345 for 2026)
+  truckTollDiesel       Float  // Truck toll diesel (€2820.80 for 2026)
+  truckTollBev          Float  // Truck toll BEV (€537.60 for 2026)
+
+  // Default fuel/energy prices (€/unit)
+  dieselPricePerLiter   Float
+  electricityPricePerKwh Float
+  hydrogenPricePerKg    Float
+
+  // Default consumption rates
+  dieselConsumption     Float  // L/100km
+  bevConsumption        Float  // kWh/100km
+  fcevConsumption       Float  // kg H2/100km
+  h2iceConsumption      Float  // kg H2/100km
+
+  // Financial defaults
+  interestRate          Float  // Interest rate (%)
+  depreciationYears     Int    // Depreciation period
+
+  // Default values (stored as JSON for flexibility)
+  defaultValues Json?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([year])
+  @@index([isActive])
+}
