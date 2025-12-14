@@ -1,0 +1,12 @@
+[
+  {
+    "type": "table",
+    "rows": [
+      ["LOKAAL20.000 km per jaar75 km per dag", "REGIONAAL42.000 km per jaar158 km per dag"],
+      [
+        "NATIONAAL78.000 km per jaar294 km per dag",
+        "INTERNATIONAAL104.000 km per jaar392 km per dag"
+      ]
+    ]
+  }
+]

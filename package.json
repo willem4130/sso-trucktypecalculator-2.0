@@ -39,6 +39,8 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
+    "scrape:original": "tsx scripts/scrape-original-tco-enhanced.ts",
+    "scrape:manual": "tsx scripts/scrape-step-by-step.ts",
     "postinstall": "prisma generate",
     "prepare": "husky",
     "lint-staged": "lint-staged"

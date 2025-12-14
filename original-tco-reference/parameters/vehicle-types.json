@@ -1,0 +1,32 @@
+[
+  {
+    "name": "KLEINE BAKWAGEN",
+    "weight": "7.5 - 12 ton",
+    "image": "https://tcovrachtwagen.org/kleine_bakwagen.webp"
+  },
+  {
+    "name": "MEDIUM BAKWAGEN",
+    "weight": "12 - 18 ton",
+    "image": "https://tcovrachtwagen.org/medium_bakwagen.webp"
+  },
+  {
+    "name": "GROTE BAKWAGEN",
+    "weight": "18 - 26 ton",
+    "image": "https://tcovrachtwagen.org/grote_bakwagen.webp"
+  },
+  {
+    "name": "BOUWVOERTUIG",
+    "weight": "18 - 26 ton",
+    "image": "https://tcovrachtwagen.org/bouw.webp"
+  },
+  {
+    "name": "LICHTE TREKKER",
+    "weight": "26 - 40 ton",
+    "image": "https://tcovrachtwagen.org/lichte_trekker.webp"
+  },
+  {
+    "name": "ZWARE TREKKER",
+    "weight": "40 - 50 ton",
+    "image": "https://tcovrachtwagen.org/zware_trekker.webp"
+  }
+]

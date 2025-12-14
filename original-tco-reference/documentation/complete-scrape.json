@@ -1,0 +1,116 @@
+{
+  "vehicleTypes": [
+    {
+      "name": "KLEINE BAKWAGEN",
+      "weight": "7.5 - 12 ton",
+      "image": "https://tcovrachtwagen.org/kleine_bakwagen.webp"
+    },
+    {
+      "name": "MEDIUM BAKWAGEN",
+      "weight": "12 - 18 ton",
+      "image": "https://tcovrachtwagen.org/medium_bakwagen.webp"
+    },
+    {
+      "name": "GROTE BAKWAGEN",
+      "weight": "18 - 26 ton",
+      "image": "https://tcovrachtwagen.org/grote_bakwagen.webp"
+    },
+    {
+      "name": "BOUWVOERTUIG",
+      "weight": "18 - 26 ton",
+      "image": "https://tcovrachtwagen.org/bouw.webp"
+    },
+    {
+      "name": "LICHTE TREKKER",
+      "weight": "26 - 40 ton",
+      "image": "https://tcovrachtwagen.org/lichte_trekker.webp"
+    },
+    {
+      "name": "ZWARE TREKKER",
+      "weight": "40 - 50 ton",
+      "image": "https://tcovrachtwagen.org/zware_trekker.webp"
+    }
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "name": "VOERTUIG",
+      "title": "Kies jouw voertuig",
+      "vehicles": [
+        {
+          "name": "KLEINE BAKWAGEN",
+          "weight": "7.5 - 12 ton",
+          "image": "https://tcovrachtwagen.org/kleine_bakwagen.webp"
+        },
+        {
+          "name": "MEDIUM BAKWAGEN",
+          "weight": "12 - 18 ton",
+          "image": "https://tcovrachtwagen.org/medium_bakwagen.webp"
+        },
+        {
+          "name": "GROTE BAKWAGEN",
+          "weight": "18 - 26 ton",
+          "image": "https://tcovrachtwagen.org/grote_bakwagen.webp"
+        },
+        {
+          "name": "BOUWVOERTUIG",
+          "weight": "18 - 26 ton",
+          "image": "https://tcovrachtwagen.org/bouw.webp"
+        },
+        {
+          "name": "LICHTE TREKKER",
+          "weight": "26 - 40 ton",
+          "image": "https://tcovrachtwagen.org/lichte_trekker.webp"
+        },
+        {
+          "name": "ZWARE TREKKER",
+          "weight": "40 - 50 ton",
+          "image": "https://tcovrachtwagen.org/zware_trekker.webp"
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "name": "SCHAAL",
+      "title": "Kies jouw rijgebied",
+      "options": []
+    },
+    {
+      "step": 3,
+      "name": "PARAMETERS",
+      "title": "Kies jouw rijgebied",
+      "tabs": [],
+      "parameters": []
+    },
+    {
+      "step": 4,
+      "name": "RESULTATEN",
+      "title": "Kies jouw rijgebied",
+      "calculations": [
+        {
+          "type": "table",
+          "rows": [
+            ["LOKAAL20.000 km per jaar75 km per dag", "REGIONAAL42.000 km per jaar158 km per dag"],
+            [
+              "NATIONAAL78.000 km per jaar294 km per dag",
+              "INTERNATIONAAL104.000 km per jaar392 km per dag"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "calculations": [
+    {
+      "type": "table",
+      "rows": [
+        ["LOKAAL20.000 km per jaar75 km per dag", "REGIONAAL42.000 km per jaar158 km per dag"],
+        [
+          "NATIONAAL78.000 km per jaar294 km per dag",
+          "INTERNATIONAAL104.000 km per jaar392 km per dag"
+        ]
+      ]
+    }
+  ],
+  "parameters": []
+}

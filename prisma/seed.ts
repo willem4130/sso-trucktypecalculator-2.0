@@ -70,27 +70,32 @@ async function main() {
   }
   console.log('✅ Created 6 vehicle types')
 
-  // Seed Driving Areas (4 categories)
+  // Seed Driving Areas (5 categories - added LOKAAL to match original calculator)
   const drivingAreas = [
+    {
+      name: 'Lokaal',
+      description: 'Local city distribution (urban delivery)',
+      defaultKmPerYear: 20000,
+    },
     {
       name: 'Regionaal',
       description: 'Regional driving (city and surrounding areas)',
-      defaultKmPerYear: 25000,
+      defaultKmPerYear: 42000,
     },
     {
       name: 'Nationaal',
       description: 'National driving (within the Netherlands)',
-      defaultKmPerYear: 50000,
+      defaultKmPerYear: 78000,
     },
     {
       name: 'Nationaal+',
-      description: 'Extended national driving',
-      defaultKmPerYear: 75000,
+      description: 'Extended national driving (cross-border regional)',
+      defaultKmPerYear: 90000,
     },
     {
       name: 'Internationaal',
       description: 'International long-haul driving',
-      defaultKmPerYear: 100000,
+      defaultKmPerYear: 130000,
     },
   ]
 
@@ -101,7 +106,7 @@ async function main() {
       create: area,
     })
   }
-  console.log('✅ Created 4 driving areas')
+  console.log('✅ Created 5 driving areas (added Lokaal to match original calculator)')
 
   // Seed 2026 Tax Rates and Defaults
   const preset2026 = {
