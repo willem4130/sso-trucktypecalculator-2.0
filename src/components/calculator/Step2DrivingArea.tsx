@@ -50,22 +50,22 @@ export function Step2DrivingArea({ session, onComplete }: Step2Props) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
           Selecteer uw rijgebied
         </h2>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
+        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
           Kies het gebied waarin u voornamelijk rijdt
         </p>
         {session.vehicleType && (
-          <p className="mt-1 text-sm text-orange-600 dark:text-orange-500">
+          <p className="mt-1 text-xs text-orange-600 dark:text-orange-500">
             Geselecteerd voertuig: {session.vehicleType.name}
           </p>
         )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-2 sm:grid-cols-2">
         {drivingAreas?.map((area: DrivingArea, index: number) => {
           const isSelected = selectedId === area.id
           const Icon = areaIcons[area.name as keyof typeof areaIcons] || MapPin
@@ -75,11 +75,11 @@ export function Step2DrivingArea({ session, onComplete }: Step2Props) {
               key={area.id}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.1 }}
+              transition={{ delay: index * 0.05 }}
             >
               <Card
                 className={cn(
-                  'group relative cursor-pointer overflow-hidden border-2 p-6 transition-all hover:shadow-lg',
+                  'group relative cursor-pointer overflow-hidden border-2 p-3 transition-all hover:shadow-lg',
                   {
                     'border-orange-500 bg-orange-50 dark:bg-orange-950/20': isSelected,
                     'border-gray-200 hover:border-orange-300 dark:border-gray-700 dark:hover:border-orange-700':
@@ -93,16 +93,16 @@ export function Step2DrivingArea({ session, onComplete }: Step2Props) {
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 text-white"
+                    className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-orange-500 text-white"
                   >
-                    <Check className="h-5 w-5" />
+                    <Check className="h-4 w-4" />
                   </motion.div>
                 )}
 
                 {/* Area Icon */}
                 <div
                   className={cn(
-                    'mb-4 flex h-16 w-16 items-center justify-center rounded-lg transition-colors',
+                    'mb-2 flex h-10 w-10 items-center justify-center rounded-lg transition-colors',
                     {
                       'bg-orange-100 text-orange-600 dark:bg-orange-900 dark:text-orange-400':
                         isSelected,
@@ -111,18 +111,18 @@ export function Step2DrivingArea({ session, onComplete }: Step2Props) {
                     }
                   )}
                 >
-                  <Icon className="h-8 w-8" />
+                  <Icon className="h-5 w-5" />
                 </div>
 
                 {/* Area Info */}
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                     {area.name}
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{area.description}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">{area.description}</p>
 
-                  <div className="pt-2">
-                    <div className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                  <div className="pt-1">
+                    <div className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
                       {(area.defaultKmPerYear / 1000).toFixed(0)}k km/jaar
                     </div>
                   </div>
@@ -144,11 +144,11 @@ export function Step2DrivingArea({ session, onComplete }: Step2Props) {
 
       {/* Visual Comparison Chart */}
       {drivingAreas && drivingAreas.length > 0 && (
-        <Card className="mt-8 border-[#08192c]/10 bg-gradient-to-br from-white to-blue-50/30 p-6 shadow-lg dark:from-gray-800 dark:to-[#08192c]/20">
-          <h3 className="mb-4 text-center text-lg font-semibold text-gray-900 dark:text-gray-100">
+        <Card className="mt-2 border-[#08192c]/10 bg-gradient-to-br from-white to-blue-50/30 p-3 shadow-lg dark:from-gray-800 dark:to-[#08192c]/20">
+          <h3 className="mb-2 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">
             Km/jaar Vergelijking
           </h3>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={120}>
             <BarChart
               data={drivingAreas.map((area) => ({
                 name: area.name,

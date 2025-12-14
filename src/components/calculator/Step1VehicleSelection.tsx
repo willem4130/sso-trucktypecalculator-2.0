@@ -42,17 +42,17 @@ export function Step1VehicleSelection({ session, onComplete }: Step1Props) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
           Selecteer uw voertuigtype
         </h2>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
+        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
           Kies het type vrachtauto waarvoor u de TCO wilt berekenen
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {vehicleTypes?.map((vehicle: VehicleType, index: number) => {
           const isSelected = selectedId === vehicle.id
 
@@ -61,11 +61,11 @@ export function Step1VehicleSelection({ session, onComplete }: Step1Props) {
               key={vehicle.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              transition={{ delay: index * 0.05 }}
             >
               <Card
                 className={cn(
-                  'group relative cursor-pointer overflow-hidden border-2 p-6 transition-all hover:shadow-lg',
+                  'group relative cursor-pointer overflow-hidden border-2 p-3 transition-all hover:shadow-lg',
                   {
                     'border-orange-500 bg-orange-50 dark:bg-orange-950/20': isSelected,
                     'border-gray-200 hover:border-orange-300 dark:border-gray-700 dark:hover:border-orange-700':
@@ -79,16 +79,16 @@ export function Step1VehicleSelection({ session, onComplete }: Step1Props) {
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 text-white"
+                    className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-orange-500 text-white"
                   >
-                    <Check className="h-5 w-5" />
+                    <Check className="h-4 w-4" />
                   </motion.div>
                 )}
 
                 {/* Vehicle Icon */}
                 <div
                   className={cn(
-                    'mb-4 flex h-16 w-16 items-center justify-center rounded-lg transition-colors',
+                    'mb-2 flex h-10 w-10 items-center justify-center rounded-lg transition-colors',
                     {
                       'bg-orange-100 text-orange-600 dark:bg-orange-900 dark:text-orange-400':
                         isSelected,
@@ -97,17 +97,17 @@ export function Step1VehicleSelection({ session, onComplete }: Step1Props) {
                     }
                   )}
                 >
-                  <Truck className="h-8 w-8" />
+                  <Truck className="h-5 w-5" />
                 </div>
 
                 {/* Vehicle Info */}
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                     {vehicle.name}
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{vehicle.description}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">{vehicle.description}</p>
 
-                  <div className="pt-2 text-xs text-gray-500 dark:text-gray-500">
+                  <div className="pt-1 text-xs text-gray-500 dark:text-gray-500">
                     <p>GVW: {vehicle.defaultGvw ? (vehicle.defaultGvw / 1000).toFixed(1) : '-'}t</p>
                     <p>
                       Payload:{' '}
@@ -135,9 +135,9 @@ export function Step1VehicleSelection({ session, onComplete }: Step1Props) {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex justify-center pt-4"
+          className="flex justify-center pt-2"
         >
-          <Button onClick={handleContinue} size="lg" className="bg-orange-500 hover:bg-orange-600">
+          <Button onClick={handleContinue} className="bg-orange-500 hover:bg-orange-600">
             Ga verder naar rijgebied
           </Button>
         </motion.div>

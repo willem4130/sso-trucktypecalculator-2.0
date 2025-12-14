@@ -18,6 +18,7 @@ const SESSION_KEY_STORAGE = 'tco-calculator-session-key'
 export function CalculatorWizard() {
   const [currentStep, setCurrentStep] = useState(1)
   const [sessionKey, setSessionKey] = useState<string | null>(null)
+  const utils = api.useUtils()
 
   // Get or create session
   const { data: session, isLoading } = api.calculator.getOrCreateSession.useQuery(
@@ -29,6 +30,10 @@ export function CalculatorWizard() {
 
   // Update session mutation
   const updateSession = api.calculator.updateSession.useMutation({
+    onSuccess: async () => {
+      // Invalidate and refetch session to get updated data
+      await utils.calculator.getOrCreateSession.invalidate()
+    },
     onError: (error: { message: string }) => {
       toast.error('Failed to save progress', {
         description: error.message,
@@ -153,12 +158,12 @@ export function CalculatorWizard() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8">
+    <div className="mx-auto max-w-6xl space-y-4">
       {/* Step Indicator */}
       <StepIndicator currentStep={currentStep} onStepClick={handleStepClick} />
 
       {/* Step Content */}
-      <Card className="relative overflow-hidden p-8">
+      <Card className="relative overflow-hidden p-6">
         <AnimatePresence mode="wait" custom={currentStep}>
           <motion.div
             key={currentStep}

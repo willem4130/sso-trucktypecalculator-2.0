@@ -32,15 +32,15 @@ export default function CalculatorPage() {
         />
       </div>
 
-      <div className="relative z-10 container mx-auto py-12 px-4">
-        <div className="mb-12 text-center">
-          <h1 className="bg-gradient-to-r from-orange-500 via-orange-600 to-[#08192c] bg-clip-text text-5xl font-bold tracking-tight text-transparent">
+      <div className="relative z-10 container mx-auto py-6 px-4">
+        <div className="mb-6 text-center">
+          <h1 className="bg-gradient-to-r from-orange-500 via-orange-600 to-[#08192c] bg-clip-text text-4xl font-bold tracking-tight text-transparent">
             TCO Truck Calculator
           </h1>
-          <p className="mt-3 text-xl text-gray-600 dark:text-gray-300">
+          <p className="mt-2 text-lg text-gray-600 dark:text-gray-300">
             Compare Total Cost of Ownership for Diesel, BEV, FCEV, and H2ICE trucks
           </p>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Powered by SCEX Software Optimization
           </p>
         </div>
