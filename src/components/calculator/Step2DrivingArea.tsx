@@ -4,7 +4,16 @@ import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { MapPin, Check, Navigation } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import {
+  BarChart,
+  Bar,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts'
 import { api } from '@/trpc/react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
@@ -27,6 +36,7 @@ const areaIcons = {
 
 export function Step2DrivingArea({ session, onComplete }: Step2Props) {
   const [selectedId, setSelectedId] = useState<string | null>(session.drivingAreaId || null)
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
 
   // Fetch all driving areas
   const { data: drivingAreas, isLoading } = api.calculator.getDrivingAreas.useQuery()
@@ -87,6 +97,8 @@ export function Step2DrivingArea({ session, onComplete }: Step2Props) {
                   }
                 )}
                 onClick={() => handleSelect(area.id)}
+                onMouseEnter={() => setHoveredId(area.id)}
+                onMouseLeave={() => setHoveredId(null)}
               >
                 {/* Selected Indicator */}
                 {isSelected && (
@@ -151,6 +163,7 @@ export function Step2DrivingArea({ session, onComplete }: Step2Props) {
           <ResponsiveContainer width="100%" height={120}>
             <BarChart
               data={drivingAreas.map((area) => ({
+                id: area.id,
                 name: area.name,
                 'Km/jaar': area.defaultKmPerYear / 1000, // Show in thousands
               }))}
@@ -169,7 +182,19 @@ export function Step2DrivingArea({ session, onComplete }: Step2Props) {
                   borderRadius: '8px',
                 }}
               />
-              <Bar dataKey="Km/jaar" fill="#f29100" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="Km/jaar" radius={[8, 8, 0, 0]}>
+                {drivingAreas.map((area) => {
+                  const isHovered = hoveredId === area.id
+                  const isSelected = selectedId === area.id
+                  return (
+                    <Cell
+                      key={area.id}
+                      fill={isHovered || isSelected ? '#f29100' : '#cbd5e1'}
+                      opacity={isHovered || !hoveredId ? 1 : 0.3}
+                    />
+                  )
+                })}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </Card>
