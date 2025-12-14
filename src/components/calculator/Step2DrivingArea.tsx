@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { MapPin, Check, Map, Globe, Zap } from 'lucide-react'
+import { NetherlandsMap } from '@/components/maps/NetherlandsMap'
 import {
   BarChart,
   Bar,
@@ -454,8 +455,26 @@ export function Step2DrivingArea({ session, onComplete }: Step2Props) {
             </Card>
           </div>
 
-          {/* Bottom Row: Calculation Flow & Area Chart */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {/* Bottom Row: Map, Calculation Flow & Area Chart */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            {/* Netherlands Coverage Map */}
+            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+              <div className="border-b border-gray-200 dark:border-gray-700 px-4 py-2.5">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Nederland Dekking
+                </h3>
+              </div>
+              <div className="p-4">
+                <NetherlandsMap
+                  selectedArea={drivingAreas?.find((a) => a.id === selectedId)?.name || null}
+                  hoveredArea={drivingAreas?.find((a) => a.id === hoveredId)?.name || null}
+                  onAreaHover={(area) => {
+                    const areaData = drivingAreas?.find((a) => a.name === area)
+                    setHoveredId(areaData?.id || null)
+                  }}
+                />
+              </div>
+            </Card>
             {/* Process Flow Diagram */}
             <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
               <div className="border-b border-gray-200 dark:border-gray-700 px-4 py-2.5">
