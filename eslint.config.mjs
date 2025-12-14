@@ -21,6 +21,8 @@ export default tseslint.config(
       '*.config.*',
       'tsconfig.tsbuildinfo',
       'src/env.js', // T3 env config uses process globals
+      'Tech Stack/**', // Pristine backup - do not lint
+      'src/hooks/use-toast.ts', // shadcn generated file
     ],
   },
   js.configs.recommended,

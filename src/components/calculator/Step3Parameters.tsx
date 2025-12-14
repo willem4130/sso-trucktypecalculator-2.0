@@ -137,7 +137,6 @@ const tabConfig = {
 export function Step3Parameters({ session, onComplete }: Step3Props) {
   const [activeTab, setActiveTab] = useState('vehicle')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
-  const [touched, setTouched] = useState<Set<string>>(new Set())
 
   // Initialize form data with session data or defaults
   const [formData, setFormData] = useState<FormData>(() => {
@@ -212,7 +211,6 @@ export function Step3Parameters({ session, onComplete }: Step3Props) {
   }
 
   const handleBlur = (field: keyof FormData) => {
-    setTouched((prev) => new Set(prev).add(field))
     validateField(field, formData[field])
   }
 
