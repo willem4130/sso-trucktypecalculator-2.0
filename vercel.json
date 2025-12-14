@@ -4,7 +4,7 @@
     "SKIP_ENV_VALIDATION": "true",
     "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "1"
   },
-  "installCommand": "npm install",
+  "installCommand": "npm install --legacy-peer-deps",
   "framework": "nextjs",
   "regions": ["iad1"]
 }
