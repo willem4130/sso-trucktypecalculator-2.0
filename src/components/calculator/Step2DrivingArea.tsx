@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { MapPin, Check, Navigation } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { api } from '@/trpc/react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
@@ -140,6 +141,39 @@ export function Step2DrivingArea({ session, onComplete }: Step2Props) {
           )
         })}
       </div>
+
+      {/* Visual Comparison Chart */}
+      {drivingAreas && drivingAreas.length > 0 && (
+        <Card className="mt-8 border-[#08192c]/10 bg-gradient-to-br from-white to-blue-50/30 p-6 shadow-lg dark:from-gray-800 dark:to-[#08192c]/20">
+          <h3 className="mb-4 text-center text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Km/jaar Vergelijking
+          </h3>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart
+              data={drivingAreas.map((area) => ({
+                name: area.name,
+                'Km/jaar': area.defaultKmPerYear / 1000, // Show in thousands
+              }))}
+            >
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+              <YAxis
+                tick={{ fontSize: 12 }}
+                label={{ value: 'Duizend km', angle: -90, position: 'insideLeft', fontSize: 12 }}
+              />
+              <Tooltip
+                formatter={(value: number) => [`${value}k km`, 'Km/jaar']}
+                contentStyle={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                }}
+              />
+              <Bar dataKey="Km/jaar" fill="#f29100" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </Card>
+      )}
 
       {/* Continue Button */}
       {selectedId && (

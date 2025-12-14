@@ -83,6 +83,18 @@ export function CalculatorWizard() {
     setCurrentStep((prev) => prev - 1)
   }
 
+  const handleStepClick = async (step: number) => {
+    if (!sessionKey) return
+
+    // Update session with clicked step
+    await updateSession.mutateAsync({
+      sessionKey,
+      step,
+    })
+
+    setCurrentStep(step)
+  }
+
   const handleStepComplete = async (data: {
     vehicleTypeId?: string
     drivingAreaId?: string
@@ -143,7 +155,7 @@ export function CalculatorWizard() {
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       {/* Step Indicator */}
-      <StepIndicator currentStep={currentStep} />
+      <StepIndicator currentStep={currentStep} onStepClick={handleStepClick} />
 
       {/* Step Content */}
       <Card className="relative overflow-hidden p-8">

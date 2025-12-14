@@ -10,6 +10,9 @@ import CountUp from 'react-countup'
 import {
   BarChart,
   Bar,
+  PieChart,
+  Pie,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,

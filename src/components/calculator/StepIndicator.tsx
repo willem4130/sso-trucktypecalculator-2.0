@@ -35,9 +35,10 @@ const steps: Step[] = [
 
 interface StepIndicatorProps {
   currentStep: number
+  onStepClick?: (step: number) => void
 }
 
-export function StepIndicator({ currentStep }: StepIndicatorProps) {
+export function StepIndicator({ currentStep, onStepClick }: StepIndicatorProps) {
   return (
     <div className="w-full">
       <div className="relative">
@@ -59,14 +60,24 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
             const isCurrent = currentStep === step.number
 
             return (
-              <div key={step.number} className="flex flex-col items-center">
+              <div
+                key={step.number}
+                className={cn('flex flex-col items-center', {
+                  'cursor-pointer': onStepClick && (isCompleted || isCurrent),
+                })}
+                onClick={() => {
+                  if (onStepClick && (isCompleted || isCurrent)) {
+                    onStepClick(step.number)
+                  }
+                }}
+              >
                 {/* Step Circle */}
                 <motion.div
                   className={cn(
-                    'relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 bg-white dark:bg-gray-900',
+                    'relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 bg-white dark:bg-gray-900 transition-transform',
                     {
                       'border-orange-500 text-orange-500': isCurrent,
-                      'border-orange-500 bg-orange-500 text-white': isCompleted,
+                      'border-orange-500 bg-orange-500 text-white hover:scale-110': isCompleted,
                       'border-gray-300 text-gray-400 dark:border-gray-600 dark:text-gray-500':
                         !isCurrent && !isCompleted,
                     }
@@ -76,6 +87,7 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
                     scale: isCurrent ? 1.1 : 1,
                   }}
                   transition={{ duration: 0.3 }}
+                  whileHover={onStepClick && (isCompleted || isCurrent) ? { scale: 1.15 } : {}}
                 >
                   {isCompleted ? (
                     <motion.div
