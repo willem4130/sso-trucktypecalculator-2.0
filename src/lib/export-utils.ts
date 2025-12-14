@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf'
 import * as XLSX from 'xlsx'
+import html2canvas from 'html2canvas'
 
 interface ResultData {
   fuelType: string
@@ -55,6 +56,249 @@ function formatNumber(value: number, decimals = 0): string {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   }).format(value)
+}
+
+/**
+ * Helper: Draw a bar chart in the PDF
+ */
+function drawBarChart(
+  doc: jsPDF,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  data: { label: string; value: number; color: string }[],
+  title: string
+) {
+  const maxValue = Math.max(...data.map((d) => d.value))
+  const barWidth = width / data.length - 5
+  const chartHeight = height - 20
+
+  // Title
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'bold')
+  doc.text(title, x, y - 5)
+
+  // Draw bars
+  data.forEach((item, i) => {
+    const barHeight = (item.value / maxValue) * chartHeight
+    const barX = x + i * (barWidth + 5)
+    const barY = y + chartHeight - barHeight
+
+    // Bar
+    const rgb = hexToRgb(item.color)
+    doc.setFillColor(rgb.r, rgb.g, rgb.b)
+    doc.rect(barX, barY, barWidth, barHeight, 'F')
+
+    // Value on top
+    doc.setFontSize(7)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(0, 0, 0)
+    doc.text(formatCurrency(item.value), barX + barWidth / 2, barY - 2, { align: 'center' })
+
+    // Label at bottom
+    doc.setFontSize(6)
+    doc.text(item.label, barX + barWidth / 2, y + chartHeight + 8, {
+      align: 'center',
+      maxWidth: barWidth,
+    })
+  })
+}
+
+/**
+ * Helper: Draw a stacked bar chart for cost breakdown
+ */
+function drawStackedBarChart(
+  doc: jsPDF,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  data: { fuelType: string; breakdown: ResultData['breakdown'] }[],
+  title: string
+) {
+  const chartHeight = height - 25
+  const barWidth = width / data.length - 10
+
+  // Title
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'bold')
+  doc.text(title, x, y - 5)
+
+  // Cost categories with colors
+  const categories = [
+    { key: 'purchaseCost', label: 'Aanschaf', color: '#3b82f6' },
+    { key: 'fuelCost', label: 'Brandstof', color: '#f29100' },
+    { key: 'maintenanceCost', label: 'Onderhoud', color: '#10b981' },
+    { key: 'taxesCost', label: 'Belastingen', color: '#ef4444' },
+    { key: 'insuranceCost', label: 'Verzekering', color: '#8b5cf6' },
+    { key: 'interestCost', label: 'Rente', color: '#f59e0b' },
+  ] as const
+
+  // Find max total for scaling
+  const maxTotal = Math.max(
+    ...data.map((item) => categories.reduce((sum, cat) => sum + (item.breakdown[cat.key] || 0), 0))
+  )
+
+  // Draw each fuel type's stacked bar
+  data.forEach((item, i) => {
+    const barX = x + i * (barWidth + 10)
+    let currentY = y + chartHeight
+
+    const total = categories.reduce((sum, cat) => sum + (item.breakdown[cat.key] || 0), 0)
+    const scaleFactor = chartHeight / maxTotal
+
+    // Draw stacked segments
+    categories.forEach((cat) => {
+      const value = item.breakdown[cat.key] || 0
+      const segmentHeight = value * scaleFactor
+
+      if (segmentHeight > 0) {
+        const rgb = hexToRgb(cat.color)
+        doc.setFillColor(rgb.r, rgb.g, rgb.b)
+        doc.rect(barX, currentY - segmentHeight, barWidth, segmentHeight, 'F')
+        currentY -= segmentHeight
+      }
+    })
+
+    // Label
+    doc.setFontSize(7)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(0, 0, 0)
+    doc.text(
+      fuelTypeLabels[item.fuelType] || item.fuelType,
+      barX + barWidth / 2,
+      y + chartHeight + 8,
+      {
+        align: 'center',
+      }
+    )
+  })
+
+  // Legend
+  let legendY = y + chartHeight + 15
+  categories.forEach((cat, i) => {
+    const legendX = x + (i % 3) * 60
+    if (i % 3 === 0 && i > 0) legendY += 6
+
+    const rgb = hexToRgb(cat.color)
+    doc.setFillColor(rgb.r, rgb.g, rgb.b)
+    doc.rect(legendX, legendY - 3, 4, 4, 'F')
+    doc.setFontSize(7)
+    doc.text(cat.label, legendX + 6, legendY)
+  })
+}
+
+/**
+ * Helper: Draw a line chart for cash flow projection
+ */
+function drawLineChart(
+  doc: jsPDF,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  data: { year: number; values: Record<string, number> }[],
+  title: string,
+  colors: Record<string, string>
+) {
+  const chartHeight = height - 30
+  const chartWidth = width - 20
+
+  // Title
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'bold')
+  doc.text(title, x, y - 5)
+
+  // Find max value for scaling
+  const allValues = data.flatMap((d) => Object.values(d.values))
+  const maxValue = Math.max(...allValues)
+  const minValue = Math.min(...allValues)
+
+  // Draw axes
+  doc.setDrawColor(200, 200, 200)
+  doc.line(x, y + chartHeight, x + chartWidth, y + chartHeight) // X-axis
+  doc.line(x, y, x, y + chartHeight) // Y-axis
+
+  // Draw gridlines and Y-axis labels
+  const ySteps = 5
+  for (let i = 0; i <= ySteps; i++) {
+    const gridY = y + (chartHeight / ySteps) * i
+    const value = maxValue - (maxValue / ySteps) * i
+
+    doc.setDrawColor(240, 240, 240)
+    doc.line(x, gridY, x + chartWidth, gridY)
+
+    doc.setFontSize(6)
+    doc.setTextColor(100, 100, 100)
+    doc.text(`€${(value / 1000).toFixed(0)}k`, x - 2, gridY + 1, { align: 'right' })
+  }
+
+  // Draw X-axis labels
+  data.forEach((point, i) => {
+    const pointX = x + (chartWidth / (data.length - 1)) * i
+    doc.setFontSize(6)
+    doc.setTextColor(100, 100, 100)
+    doc.text(`${point.year}`, pointX, y + chartHeight + 6, { align: 'center' })
+  })
+
+  // Draw lines for each fuel type
+  Object.keys(data[0]?.values || {}).forEach((fuelType) => {
+    const color = colors[fuelType] || '#000000'
+    const rgb = hexToRgb(color)
+    doc.setDrawColor(rgb.r, rgb.g, rgb.b)
+    doc.setLineWidth(0.5)
+
+    for (let i = 0; i < data.length - 1; i++) {
+      const x1 = x + (chartWidth / (data.length - 1)) * i
+      const y1 =
+        y +
+        chartHeight -
+        ((data[i]!.values[fuelType]! - minValue) / (maxValue - minValue)) * chartHeight
+      const x2 = x + (chartWidth / (data.length - 1)) * (i + 1)
+      const y2 =
+        y +
+        chartHeight -
+        ((data[i + 1]!.values[fuelType]! - minValue) / (maxValue - minValue)) * chartHeight
+
+      doc.line(x1, y1, x2, y2)
+    }
+  })
+
+  // Legend
+  let legendX = x
+  let legendY = y + chartHeight + 15
+  Object.entries(colors).forEach(([fuelType, color], i) => {
+    if (i > 0 && i % 2 === 0) {
+      legendX = x
+      legendY += 6
+    } else if (i > 0) {
+      legendX += 50
+    }
+
+    const rgb = hexToRgb(color)
+    doc.setDrawColor(rgb.r, rgb.g, rgb.b)
+    doc.setLineWidth(1)
+    doc.line(legendX, legendY - 1, legendX + 8, legendY - 1)
+
+    doc.setFontSize(7)
+    doc.setTextColor(0, 0, 0)
+    doc.text(fuelTypeLabels[fuelType] || fuelType, legendX + 10, legendY)
+  })
+}
+
+/**
+ * Helper: Convert hex color to RGB
+ */
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+  return result
+    ? {
+        r: parseInt(result[1]!, 16),
+        g: parseInt(result[2]!, 16),
+        b: parseInt(result[3]!, 16),
+      }
+    : { r: 0, g: 0, b: 0 }
 }
 
 /**
@@ -161,10 +405,47 @@ export function exportToPDF(data: ExportData, options: ExportOptions) {
       yPos += 6
     })
     yPos += 8
+
+    // Add TCO Comparison Bar Chart
+    checkPageBreak(70)
+    const fuelColors: Record<string, string> = {
+      diesel: '#6366f1',
+      bev: '#10b981',
+      fcev: '#06b6d4',
+      h2ice: '#a855f7',
+    }
+    drawBarChart(
+      doc,
+      20,
+      yPos,
+      pageWidth - 40,
+      60,
+      data.results.map((r) => ({
+        label: fuelTypeLabels[r.fuelType] || r.fuelType,
+        value: r.totalCost,
+        color: fuelColors[r.fuelType] || '#000000',
+      })),
+      'TCO Vergelijking (Totale Kosten)'
+    )
+    yPos += 75
   }
 
   // Cost Breakdown
   if (options.breakdown) {
+    // Add Stacked Bar Chart for Cost Breakdown
+    checkPageBreak(95)
+    drawStackedBarChart(
+      doc,
+      20,
+      yPos,
+      pageWidth - 40,
+      80,
+      data.results.map((r) => ({ fuelType: r.fuelType, breakdown: r.breakdown })),
+      'Kostenverdeling per Brandstoftype'
+    )
+    yPos += 95
+
+    // Detailed breakdown tables
     data.results.forEach((result) => {
       checkPageBreak(70)
       doc.setFillColor(245, 245, 245)
@@ -204,6 +485,50 @@ export function exportToPDF(data: ExportData, options: ExportOptions) {
       doc.setFont('helvetica', 'normal')
       yPos += 12
     })
+  }
+
+  // Timeline - Cash Flow Projection Chart
+  if (options.timeline) {
+    checkPageBreak(90)
+
+    // Prepare data for line chart
+    const cashFlowData: { year: number; values: Record<string, number> }[] = []
+    for (let year = 0; year <= data.depreciationYears; year++) {
+      const values: Record<string, number> = {}
+      data.results.forEach((result) => {
+        const purchaseCost = result.breakdown.purchaseCost
+        const annualOpex =
+          result.breakdown.fuelCost +
+          result.breakdown.maintenanceCost +
+          result.breakdown.taxesCost +
+          result.breakdown.insuranceCost
+
+        // Cumulative: Initial investment + (annual OPEX * years)
+        const cumulative =
+          year === 0 ? purchaseCost : purchaseCost + (annualOpex / data.depreciationYears) * year
+        values[result.fuelType] = cumulative
+      })
+      cashFlowData.push({ year, values })
+    }
+
+    const fuelColors: Record<string, string> = {
+      diesel: '#6366f1',
+      bev: '#10b981',
+      fcev: '#06b6d4',
+      h2ice: '#a855f7',
+    }
+
+    drawLineChart(
+      doc,
+      20,
+      yPos,
+      pageWidth - 40,
+      80,
+      cashFlowData,
+      'Cumulatieve Cashflow Projectie',
+      fuelColors
+    )
+    yPos += 95
   }
 
   // Insights Section
