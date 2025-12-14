@@ -431,31 +431,53 @@ export function Step4Results({ session }: Step4Props) {
 
   // Confirm export
   const confirmExport = (format: 'pdf' | 'excel') => {
-    // Prepare export data
+    // Prepare comprehensive export data with all details
     const exportData = {
       vehicleType: session.vehicleType?.name || 'Onbekend voertuig',
       drivingArea: session.drivingArea?.name || 'Onbekend gebied',
       depreciationYears,
       results: resultsArray,
+      // Add parameters data from Step 3
+      parametersData: session.parametersData as {
+        purchasePrice: number
+        gvw?: number
+        payload?: number
+        kmPerYear: number
+        fuelType: 'diesel' | 'bev' | 'fcev' | 'h2ice'
+        consumption: number
+        motorTax?: number
+        truckToll?: number
+        subsidy?: number
+        interestRate?: number
+        depreciationYears?: number
+        maintenanceCostPerKm?: number
+        insurancePercentage?: number
+      },
+      // Add vehicle details
+      vehicleDetails: session.vehicleType
+        ? {
+            name: session.vehicleType.name,
+            description: session.vehicleType.description,
+            defaultGvw: session.vehicleType.defaultGvw,
+            defaultPayload: session.vehicleType.defaultPayload,
+          }
+        : undefined,
+      // Add driving area details
+      drivingAreaDetails: session.drivingArea
+        ? {
+            name: session.drivingArea.name,
+            description: session.drivingArea.description,
+            defaultKmPerYear: session.drivingArea.defaultKmPerYear,
+          }
+        : undefined,
     }
 
-    // Map new nested options to legacy format for export functions
-    const legacyOptions = {
-      kpis: exportOptions.executiveSummary.enabled && exportOptions.executiveSummary.keyFindings,
-      comparison: exportOptions.costAnalysis.enabled && exportOptions.costAnalysis.comparisonTable,
-      breakdown:
-        exportOptions.costAnalysis.enabled && exportOptions.costAnalysis.costBreakdownChart,
-      timeline: exportOptions.timeline.enabled && exportOptions.timeline.cumulativeCashFlow,
-      detailed: exportOptions.costAnalysis.enabled && exportOptions.costAnalysis.detailedBreakdown,
-      insights: exportOptions.insights.enabled,
-    }
-
-    // Call the appropriate export function
+    // Call the appropriate export function with new hierarchical options
     try {
       if (format === 'pdf') {
-        exportToPDF(exportData, legacyOptions)
+        exportToPDF(exportData, exportOptions)
       } else {
-        exportToExcel(exportData, legacyOptions)
+        exportToExcel(exportData, exportOptions)
       }
     } catch (error) {
       console.error('Export failed:', error)
