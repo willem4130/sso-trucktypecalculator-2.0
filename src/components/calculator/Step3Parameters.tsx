@@ -244,11 +244,15 @@ export function Step3Parameters({ session, onComplete }: Step3Props) {
   })
 
   // Calculate TCO mutation
+  const utils = api.useUtils()
   const calculateTCO = api.calculator.calculateTCO.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('TCO berekening succesvol!', {
         description: 'De resultaten worden nu geladen...',
       })
+      // Refetch session to get updated resultsData
+      await utils.calculator.getOrCreateSession.invalidate()
+      await utils.calculator.getOrCreateSession.refetch()
     },
     onError: (error: { message: string }) => {
       toast.error('Fout bij berekenen TCO', {
@@ -432,7 +436,7 @@ export function Step3Parameters({ session, onComplete }: Step3Props) {
     }
 
     try {
-      // Calculate TCO
+      // Calculate TCO (this saves resultsData to session)
       await calculateTCO.mutateAsync({
         sessionKey: session.sessionKey,
         vehicleTypeId: session.vehicleTypeId,
@@ -440,7 +444,7 @@ export function Step3Parameters({ session, onComplete }: Step3Props) {
         parametersData,
       })
 
-      // Save parameters and move to results
+      // Save parameters to session (wizard will handle navigation)
       onComplete(parametersData)
     } catch {
       // Error handled by mutation

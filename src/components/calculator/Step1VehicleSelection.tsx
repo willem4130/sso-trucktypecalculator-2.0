@@ -68,14 +68,10 @@ export function Step1VehicleSelection({ session, onComplete }: Step1Props) {
     }
   }
 
+  // Selection handler - saves to session immediately
   const handleSelect = (id: string) => {
     setSelectedId(id)
-  }
-
-  const handleContinue = () => {
-    if (selectedId) {
-      onComplete(selectedId)
-    }
+    onComplete(id) // Save to session
   }
 
   const getSortIcon = (field: SortField) => {
@@ -414,10 +410,7 @@ export function Step1VehicleSelection({ session, onComplete }: Step1Props) {
                 </div>
               </Card>
 
-              {/* Continue Button */}
-              <Button onClick={handleContinue} className="w-full bg-orange-500 hover:bg-orange-600">
-                Ga verder naar rijgebied
-              </Button>
+              {/* Selection saved - use wizard navigation buttons below */}
             </motion.div>
           ) : (
             // Empty State

@@ -102,14 +102,10 @@ export function Step2DrivingArea({ session, onComplete }: Step2Props) {
   // Fetch all driving areas
   const { data: drivingAreas, isLoading } = api.calculator.getDrivingAreas.useQuery()
 
+  // Selection handler - saves to session immediately
   const handleSelect = (id: string) => {
     setSelectedId(id)
-  }
-
-  const handleContinue = () => {
-    if (selectedId) {
-      onComplete(selectedId)
-    }
+    onComplete(id) // Save to session
   }
 
   if (isLoading) {
@@ -319,17 +315,7 @@ export function Step2DrivingArea({ session, onComplete }: Step2Props) {
               </div>
             </Card>
 
-            {/* Continue Button */}
-            {selectedArea && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <Button
-                  onClick={handleContinue}
-                  className="w-full bg-orange-500 hover:bg-orange-600"
-                >
-                  Ga door naar Parameters
-                </Button>
-              </motion.div>
-            )}
+            {/* Selection saved - use wizard navigation buttons below */}
           </div>
         </div>
 

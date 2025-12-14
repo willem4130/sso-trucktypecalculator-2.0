@@ -42,12 +42,11 @@ export function CalculatorWizard() {
     },
   })
 
-  // Initialize session key from storage or create new
+  // Initialize with fresh session on mount
   useEffect(() => {
-    const storedKey = localStorage.getItem(SESSION_KEY_STORAGE)
-    if (storedKey) {
-      setSessionKey(storedKey)
-    }
+    // Always start fresh - clear old session
+    localStorage.removeItem(SESSION_KEY_STORAGE)
+    setSessionKey(null) // Will trigger new session creation
   }, [])
 
   // Save session key to storage when session is created
@@ -108,19 +107,23 @@ export function CalculatorWizard() {
   }) => {
     if (!sessionKey) return
 
-    // Save data and move to next step
+    // Save data WITHOUT auto-navigating
     await updateSession.mutateAsync({
       sessionKey,
-      step: currentStep < 4 ? currentStep + 1 : currentStep,
+      step: currentStep, // Don't increment step - user clicks Next
       ...data,
     })
 
     // Ensure session is refetched with updated data
     await utils.calculator.getOrCreateSession.refetch()
+  }
 
-    if (currentStep < 4) {
-      setCurrentStep((prev) => prev + 1)
-    }
+  // Check if user can proceed to next step
+  const canProceed = () => {
+    if (currentStep === 1) return !!session?.vehicleTypeId
+    if (currentStep === 2) return !!session?.drivingAreaId
+    if (currentStep === 3) return !!session?.resultsData
+    return false
   }
 
   // Animation variants for step transitions
@@ -216,13 +219,13 @@ export function CalculatorWizard() {
           Vorige
         </Button>
 
-        {currentStep < 3 && (
+        {currentStep < 4 && (
           <Button
             onClick={handleNext}
-            disabled={updateSession.isPending}
+            disabled={updateSession.isPending || !canProceed()}
             className="gap-2 bg-orange-500 hover:bg-orange-600"
           >
-            Volgende
+            {currentStep === 3 ? 'Bekijk Resultaten' : 'Volgende'}
             <ArrowRight className="h-4 w-4" />
           </Button>
         )}
