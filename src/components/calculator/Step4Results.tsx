@@ -18,6 +18,7 @@ import {
   EyeOff,
   X,
 } from 'lucide-react'
+import { exportToPDF, exportToExcel } from '@/lib/export-utils'
 import CountUp from 'react-countup'
 import {
   BarChart,
@@ -35,6 +36,8 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
+  AreaChart,
+  Area,
 } from 'recharts'
 import { cn } from '@/lib/utils'
 import type { CalculationSession, VehicleType, DrivingArea } from '@prisma/client'
@@ -64,6 +67,8 @@ type FuelType = keyof typeof fuelTypeColors
 type SortField = 'totalCost' | 'costPerKm' | 'co2Emissions' | 'fuelCost' | 'none'
 type SortDirection = 'asc' | 'desc'
 type ViewMode = 'overzicht' | 'analyse' | 'expert'
+type BreakdownChartType = 'stacked' | 'grouped' | 'horizontal' | 'percentage'
+type TimelineChartType = 'line' | 'area' | 'bar'
 
 interface ResultData {
   fuelType: string
@@ -102,6 +107,8 @@ export function Step4Results({ session }: Step4Props) {
     'fcev',
     'h2ice',
   ])
+  const [breakdownChartType, setBreakdownChartType] = useState<BreakdownChartType>('stacked')
+  const [timelineChartType, setTimelineChartType] = useState<TimelineChartType>('line')
   const [showExportDialog, setShowExportDialog] = useState(false)
   const [exportOptions, setExportOptions] = useState({
     kpis: true,
@@ -111,6 +118,10 @@ export function Step4Results({ session }: Step4Props) {
     detailed: true,
     insights: true,
   })
+
+  // Currency formatter helper
+  const formatCurrency = (value: number) =>
+    `€${value.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}`
 
   const results = session.resultsData as Record<string, ResultData> | null
 
@@ -286,9 +297,27 @@ export function Step4Results({ session }: Step4Props) {
 
   // Confirm export
   const confirmExport = (format: 'pdf' | 'excel') => {
-    console.log('Export to', format, 'with options:', exportOptions)
+    // Prepare export data
+    const exportData = {
+      vehicleType: session.vehicleType?.name || 'Onbekend voertuig',
+      drivingArea: session.drivingArea?.name || 'Onbekend gebied',
+      depreciationYears,
+      results: resultsArray,
+    }
+
+    // Call the appropriate export function
+    try {
+      if (format === 'pdf') {
+        exportToPDF(exportData, exportOptions)
+      } else {
+        exportToExcel(exportData, exportOptions)
+      }
+    } catch (error) {
+      console.error('Export failed:', error)
+      alert('Export is mislukt. Probeer het opnieuw.')
+    }
+
     setShowExportDialog(false)
-    // TODO: Implement actual export with selected options
   }
 
   return (
@@ -825,107 +854,569 @@ export function Step4Results({ session }: Step4Props) {
             </div>
           </div>
 
-          {/* Cost Breakdown Stacked Bar Chart */}
+          {/* Cost Breakdown Chart with Type Selector */}
           <Card className="overflow-hidden">
             <div className="border-b border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                Kostenverdeling per Brandstoftype
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Kostenverdeling per Brandstoftype
+                </h3>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setBreakdownChartType('stacked')}
+                    className={cn(
+                      'rounded px-2 py-1 text-[10px] font-medium uppercase tracking-wide transition-colors',
+                      breakdownChartType === 'stacked'
+                        ? 'bg-orange-500 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    )}
+                    title="Gestapeld - Totaal overzicht"
+                  >
+                    Gestapeld
+                  </button>
+                  <button
+                    onClick={() => setBreakdownChartType('grouped')}
+                    className={cn(
+                      'rounded px-2 py-1 text-[10px] font-medium uppercase tracking-wide transition-colors',
+                      breakdownChartType === 'grouped'
+                        ? 'bg-orange-500 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    )}
+                    title="Gegroepeerd - Categorievergelijking"
+                  >
+                    Gegroepeerd
+                  </button>
+                  <button
+                    onClick={() => setBreakdownChartType('horizontal')}
+                    className={cn(
+                      'rounded px-2 py-1 text-[10px] font-medium uppercase tracking-wide transition-colors',
+                      breakdownChartType === 'horizontal'
+                        ? 'bg-orange-500 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    )}
+                    title="Horizontaal - Betere leesbaarheid"
+                  >
+                    Horizontaal
+                  </button>
+                  <button
+                    onClick={() => setBreakdownChartType('percentage')}
+                    className={cn(
+                      'rounded px-2 py-1 text-[10px] font-medium uppercase tracking-wide transition-colors',
+                      breakdownChartType === 'percentage'
+                        ? 'bg-orange-500 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    )}
+                    title="Percentage - Relatieve verdeling"
+                  >
+                    Percentage
+                  </button>
+                </div>
+              </div>
             </div>
             <div className="p-4">
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={stackedData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="name"
-                    tick={{ fontSize: 12 }}
-                    stroke="#9ca3af"
-                    style={{ fontFamily: 'var(--font-sans)' }}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 12 }}
-                    stroke="#9ca3af"
-                    tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`}
-                    style={{ fontFamily: 'var(--font-sans)' }}
-                  />
-                  <Tooltip
-                    formatter={(value: number) =>
-                      `€${value.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}`
-                    }
-                    contentStyle={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                    }}
-                  />
-                  <Legend
-                    wrapperStyle={{ fontSize: '12px', fontFamily: 'var(--font-sans)' }}
-                    iconType="rect"
-                  />
-                  <Bar dataKey="Aanschaf" stackId="a" fill={COST_COLORS.purchaseCost} />
-                  <Bar dataKey="Brandstof" stackId="a" fill={COST_COLORS.fuelCost} />
-                  <Bar dataKey="Onderhoud" stackId="a" fill={COST_COLORS.maintenanceCost} />
-                  <Bar dataKey="Belastingen" stackId="a" fill={COST_COLORS.taxesCost} />
-                  <Bar dataKey="Verzekering" stackId="a" fill={COST_COLORS.insuranceCost} />
-                  <Bar dataKey="Rente" stackId="a" fill={COST_COLORS.interestCost} />
-                </BarChart>
+                {breakdownChartType === 'stacked' && (
+                  <BarChart data={stackedData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 12 }}
+                      stroke="#9ca3af"
+                      style={{ fontFamily: 'var(--font-sans)' }}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 12 }}
+                      stroke="#9ca3af"
+                      tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`}
+                      style={{ fontFamily: 'var(--font-sans)' }}
+                    />
+                    <Tooltip
+                      formatter={(value: number) =>
+                        `€${value.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}`
+                      }
+                      contentStyle={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Legend
+                      wrapperStyle={{ fontSize: '12px', fontFamily: 'var(--font-sans)' }}
+                      iconType="rect"
+                    />
+                    <Bar dataKey="Aanschaf" stackId="a" fill={COST_COLORS.purchaseCost} />
+                    <Bar dataKey="Brandstof" stackId="a" fill={COST_COLORS.fuelCost} />
+                    <Bar dataKey="Onderhoud" stackId="a" fill={COST_COLORS.maintenanceCost} />
+                    <Bar dataKey="Belastingen" stackId="a" fill={COST_COLORS.taxesCost} />
+                    <Bar dataKey="Verzekering" stackId="a" fill={COST_COLORS.insuranceCost} />
+                    <Bar dataKey="Rente" stackId="a" fill={COST_COLORS.interestCost} />
+                  </BarChart>
+                )}
+                {breakdownChartType === 'grouped' && (
+                  <BarChart data={stackedData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 12 }}
+                      stroke="#9ca3af"
+                      style={{ fontFamily: 'var(--font-sans)' }}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 12 }}
+                      stroke="#9ca3af"
+                      tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`}
+                      style={{ fontFamily: 'var(--font-sans)' }}
+                    />
+                    <Tooltip
+                      formatter={(value: number) =>
+                        `€${value.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}`
+                      }
+                      contentStyle={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Legend
+                      wrapperStyle={{ fontSize: '12px', fontFamily: 'var(--font-sans)' }}
+                      iconType="rect"
+                    />
+                    <Bar dataKey="Aanschaf" fill={COST_COLORS.purchaseCost} />
+                    <Bar dataKey="Brandstof" fill={COST_COLORS.fuelCost} />
+                    <Bar dataKey="Onderhoud" fill={COST_COLORS.maintenanceCost} />
+                    <Bar dataKey="Belastingen" fill={COST_COLORS.taxesCost} />
+                    <Bar dataKey="Verzekering" fill={COST_COLORS.insuranceCost} />
+                    <Bar dataKey="Rente" fill={COST_COLORS.interestCost} />
+                  </BarChart>
+                )}
+                {breakdownChartType === 'horizontal' && (
+                  <BarChart data={stackedData} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis
+                      type="number"
+                      tick={{ fontSize: 12 }}
+                      stroke="#9ca3af"
+                      tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`}
+                      style={{ fontFamily: 'var(--font-sans)' }}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      tick={{ fontSize: 12 }}
+                      stroke="#9ca3af"
+                      width={80}
+                      style={{ fontFamily: 'var(--font-sans)' }}
+                    />
+                    <Tooltip
+                      formatter={(value: number) =>
+                        `€${value.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}`
+                      }
+                      contentStyle={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Legend
+                      wrapperStyle={{ fontSize: '12px', fontFamily: 'var(--font-sans)' }}
+                      iconType="rect"
+                    />
+                    <Bar dataKey="Aanschaf" stackId="a" fill={COST_COLORS.purchaseCost} />
+                    <Bar dataKey="Brandstof" stackId="a" fill={COST_COLORS.fuelCost} />
+                    <Bar dataKey="Onderhoud" stackId="a" fill={COST_COLORS.maintenanceCost} />
+                    <Bar dataKey="Belastingen" stackId="a" fill={COST_COLORS.taxesCost} />
+                    <Bar dataKey="Verzekering" stackId="a" fill={COST_COLORS.insuranceCost} />
+                    <Bar dataKey="Rente" stackId="a" fill={COST_COLORS.interestCost} />
+                  </BarChart>
+                )}
+                {breakdownChartType === 'percentage' && (
+                  <BarChart data={stackedData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 12 }}
+                      stroke="#9ca3af"
+                      style={{ fontFamily: 'var(--font-sans)' }}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 12 }}
+                      stroke="#9ca3af"
+                      tickFormatter={(value) => `${value}%`}
+                      domain={[0, 100]}
+                      style={{ fontFamily: 'var(--font-sans)' }}
+                    />
+                    <Tooltip
+                      formatter={(value: number, name: string) => {
+                        const item = stackedData.find((d) => d.name === name)
+                        if (!item) return '0%'
+                        const total =
+                          (item.Aanschaf || 0) +
+                          (item.Brandstof || 0) +
+                          (item.Onderhoud || 0) +
+                          (item.Belastingen || 0) +
+                          (item.Verzekering || 0) +
+                          (item.Rente || 0)
+                        const percent = ((value as number) / total) * 100
+                        return `${percent.toFixed(1)}%`
+                      }}
+                      contentStyle={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Legend
+                      wrapperStyle={{ fontSize: '12px', fontFamily: 'var(--font-sans)' }}
+                      iconType="rect"
+                    />
+                    <Bar dataKey="Aanschaf" stackId="percent" fill={COST_COLORS.purchaseCost} />
+                    <Bar dataKey="Brandstof" stackId="percent" fill={COST_COLORS.fuelCost} />
+                    <Bar dataKey="Onderhoud" stackId="percent" fill={COST_COLORS.maintenanceCost} />
+                    <Bar dataKey="Belastingen" stackId="percent" fill={COST_COLORS.taxesCost} />
+                    <Bar dataKey="Verzekering" stackId="percent" fill={COST_COLORS.insuranceCost} />
+                    <Bar dataKey="Rente" stackId="percent" fill={COST_COLORS.interestCost} />
+                  </BarChart>
+                )}
               </ResponsiveContainer>
             </div>
           </Card>
 
-          {/* Annual Cost Progression */}
+          {/* Timeline Chart with Type Selector */}
           <Card className="overflow-hidden">
             <div className="border-b border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                Kostenopbouw over {depreciationYears} jaar
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Kostenopbouw over {depreciationYears} jaar
+                </h3>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setTimelineChartType('line')}
+                    className={cn(
+                      'rounded px-2 py-1 text-[10px] font-medium uppercase tracking-wide transition-colors',
+                      timelineChartType === 'line'
+                        ? 'bg-orange-500 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    )}
+                    title="Lijn - Trend weergave"
+                  >
+                    Lijn
+                  </button>
+                  <button
+                    onClick={() => setTimelineChartType('area')}
+                    className={cn(
+                      'rounded px-2 py-1 text-[10px] font-medium uppercase tracking-wide transition-colors',
+                      timelineChartType === 'area'
+                        ? 'bg-orange-500 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    )}
+                    title="Vlak - Cumulatief zicht"
+                  >
+                    Vlak
+                  </button>
+                  <button
+                    onClick={() => setTimelineChartType('bar')}
+                    className={cn(
+                      'rounded px-2 py-1 text-[10px] font-medium uppercase tracking-wide transition-colors',
+                      timelineChartType === 'bar'
+                        ? 'bg-orange-500 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    )}
+                    title="Staaf - Jaarvergelijking"
+                  >
+                    Staaf
+                  </button>
+                </div>
+              </div>
             </div>
             <div className="p-4">
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={annualData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="year"
-                    tick={{ fontSize: 12 }}
-                    stroke="#9ca3af"
-                    label={{ value: 'Jaar', position: 'insideBottom', offset: -5, fontSize: 12 }}
-                    style={{ fontFamily: 'var(--font-sans)' }}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 12 }}
-                    stroke="#9ca3af"
-                    tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`}
-                    style={{ fontFamily: 'var(--font-sans)' }}
-                  />
-                  <Tooltip
-                    formatter={(value: number) =>
-                      `€${value.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}`
-                    }
-                    contentStyle={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                    }}
-                  />
-                  <Legend
-                    wrapperStyle={{ fontSize: '12px', fontFamily: 'var(--font-sans)' }}
-                    iconType="line"
-                  />
-                  {resultsArray.map((result) => (
-                    <Line
-                      key={result.fuelType}
-                      type="monotone"
-                      dataKey={fuelTypeLabels[result.fuelType as FuelType]}
-                      stroke={fuelTypeColors[result.fuelType as FuelType]}
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                      activeDot={{ r: 6 }}
+                {timelineChartType === 'line' && (
+                  <LineChart data={annualData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="year"
+                      tick={{ fontSize: 12 }}
+                      stroke="#9ca3af"
+                      label={{ value: 'Jaar', position: 'insideBottom', offset: -5, fontSize: 12 }}
+                      style={{ fontFamily: 'var(--font-sans)' }}
                     />
-                  ))}
-                </LineChart>
+                    <YAxis
+                      tick={{ fontSize: 12 }}
+                      stroke="#9ca3af"
+                      tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`}
+                      style={{ fontFamily: 'var(--font-sans)' }}
+                    />
+                    <Tooltip
+                      formatter={(value: number) =>
+                        `€${value.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}`
+                      }
+                      contentStyle={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Legend
+                      wrapperStyle={{ fontSize: '12px', fontFamily: 'var(--font-sans)' }}
+                      iconType="line"
+                    />
+                    {resultsArray.map((result) => (
+                      <Line
+                        key={result.fuelType}
+                        type="monotone"
+                        dataKey={fuelTypeLabels[result.fuelType as FuelType]}
+                        stroke={fuelTypeColors[result.fuelType as FuelType]}
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    ))}
+                  </LineChart>
+                )}
+                {timelineChartType === 'area' && (
+                  <AreaChart data={annualData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="year"
+                      tick={{ fontSize: 12 }}
+                      stroke="#9ca3af"
+                      label={{ value: 'Jaar', position: 'insideBottom', offset: -5, fontSize: 12 }}
+                      style={{ fontFamily: 'var(--font-sans)' }}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 12 }}
+                      stroke="#9ca3af"
+                      tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`}
+                      style={{ fontFamily: 'var(--font-sans)' }}
+                    />
+                    <Tooltip
+                      formatter={(value: number) =>
+                        `€${value.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}`
+                      }
+                      contentStyle={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Legend
+                      wrapperStyle={{ fontSize: '12px', fontFamily: 'var(--font-sans)' }}
+                      iconType="rect"
+                    />
+                    {resultsArray.map((result) => (
+                      <Area
+                        key={result.fuelType}
+                        type="monotone"
+                        dataKey={fuelTypeLabels[result.fuelType as FuelType]}
+                        stroke={fuelTypeColors[result.fuelType as FuelType]}
+                        fill={fuelTypeColors[result.fuelType as FuelType]}
+                        fillOpacity={0.3}
+                        strokeWidth={2}
+                      />
+                    ))}
+                  </AreaChart>
+                )}
+                {timelineChartType === 'bar' && (
+                  <BarChart data={annualData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="year"
+                      tick={{ fontSize: 12 }}
+                      stroke="#9ca3af"
+                      label={{ value: 'Jaar', position: 'insideBottom', offset: -5, fontSize: 12 }}
+                      style={{ fontFamily: 'var(--font-sans)' }}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 12 }}
+                      stroke="#9ca3af"
+                      tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`}
+                      style={{ fontFamily: 'var(--font-sans)' }}
+                    />
+                    <Tooltip
+                      formatter={(value: number) =>
+                        `€${value.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}`
+                      }
+                      contentStyle={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Legend
+                      wrapperStyle={{ fontSize: '12px', fontFamily: 'var(--font-sans)' }}
+                      iconType="rect"
+                    />
+                    {resultsArray.map((result) => (
+                      <Bar
+                        key={result.fuelType}
+                        dataKey={fuelTypeLabels[result.fuelType as FuelType]}
+                        fill={fuelTypeColors[result.fuelType as FuelType]}
+                      />
+                    ))}
+                  </BarChart>
+                )}
               </ResponsiveContainer>
             </div>
           </Card>
+
+          {/* CFO CASH FLOW DASHBOARD */}
+          <div className="mt-6 space-y-6">
+            <div className="flex items-center justify-between border-b border-gray-200 pb-3 dark:border-gray-700">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-gray-100">
+                  💰 CFO Dashboard - Cashflow Analyse
+                </h3>
+                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                  Financiële impact en cashflow projectie
+                </p>
+              </div>
+            </div>
+
+            {/* CAPEX vs OPEX KPIs */}
+            <div className="grid gap-4 md:grid-cols-4">
+              {resultsArray.map((result) => {
+                const purchaseCost = result.breakdown.purchaseCost
+                const annualOpex =
+                  result.breakdown.fuelCost +
+                  result.breakdown.maintenanceCost +
+                  result.breakdown.taxesCost +
+                  result.breakdown.insuranceCost
+                const monthlyOpex = annualOpex / 12
+                const totalLifetime = result.totalCost
+
+                return (
+                  <Card key={result.fuelType} className="border-gray-200 p-4 dark:border-gray-700">
+                    <div className="mb-3 flex items-center justify-between">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        {fuelTypeLabels[result.fuelType as FuelType]}
+                      </span>
+                      <div
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: fuelTypeColors[result.fuelType as FuelType] }}
+                      />
+                    </div>
+
+                    <div className="space-y-3">
+                      {/* CAPEX */}
+                      <div>
+                        <div className="text-[10px] font-medium text-gray-600 dark:text-gray-400">
+                          CAPEX (Initial)
+                        </div>
+                        <div className="mt-0.5 text-lg font-bold tabular-nums text-gray-900 dark:text-gray-100">
+                          {formatCurrency(purchaseCost)}
+                        </div>
+                      </div>
+
+                      {/* Monthly OPEX */}
+                      <div className="border-t border-gray-100 pt-2 dark:border-gray-800">
+                        <div className="text-[10px] font-medium text-gray-600 dark:text-gray-400">
+                          Monthly OPEX
+                        </div>
+                        <div className="mt-0.5 text-sm font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+                          {formatCurrency(monthlyOpex)}/mnd
+                        </div>
+                      </div>
+
+                      {/* Annual OPEX */}
+                      <div>
+                        <div className="text-[10px] font-medium text-gray-600 dark:text-gray-400">
+                          Annual OPEX
+                        </div>
+                        <div className="mt-0.5 text-sm font-semibold tabular-nums text-orange-600 dark:text-orange-400">
+                          {formatCurrency(annualOpex)}/jr
+                        </div>
+                      </div>
+
+                      {/* Total Lifetime */}
+                      <div className="border-t border-gray-100 pt-2 dark:border-gray-800">
+                        <div className="text-[10px] font-medium text-gray-600 dark:text-gray-400">
+                          Total {depreciationYears}yr
+                        </div>
+                        <div className="mt-0.5 text-base font-bold tabular-nums text-gray-900 dark:text-gray-100">
+                          {formatCurrency(totalLifetime)}
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                )
+              })}
+            </div>
+
+            {/* Cumulative Cash Flow Chart */}
+            <Card className="overflow-hidden">
+              <div className="border-b border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Cumulatieve Cashflow Projectie
+                </h3>
+              </div>
+              <div className="p-4">
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart
+                    data={Array.from({ length: depreciationYears + 1 }, (_, i) => {
+                      const year = i
+                      const dataPoint: Record<string, number | string> = { year }
+
+                      resultsArray.forEach((result) => {
+                        const purchaseCost = result.breakdown.purchaseCost
+                        const annualOpex =
+                          result.breakdown.fuelCost +
+                          result.breakdown.maintenanceCost +
+                          result.breakdown.taxesCost +
+                          result.breakdown.insuranceCost
+
+                        // Cumulative: Initial investment + (annual OPEX * years)
+                        const cumulative =
+                          year === 0 ? purchaseCost : purchaseCost + annualOpex * year
+                        dataPoint[fuelTypeLabels[result.fuelType as FuelType]] = cumulative
+                      })
+
+                      return dataPoint
+                    })}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="year"
+                      tick={{ fontSize: 12 }}
+                      stroke="#9ca3af"
+                      label={{ value: 'Jaar', position: 'insideBottom', offset: -5, fontSize: 12 }}
+                      style={{ fontFamily: 'var(--font-sans)' }}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 12 }}
+                      stroke="#9ca3af"
+                      tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`}
+                      style={{ fontFamily: 'var(--font-sans)' }}
+                    />
+                    <Tooltip
+                      formatter={(value: number) =>
+                        `€${value.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}`
+                      }
+                      contentStyle={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Legend
+                      wrapperStyle={{ fontSize: '12px', fontFamily: 'var(--font-sans)' }}
+                      iconType="line"
+                    />
+                    {resultsArray.map((result) => (
+                      <Line
+                        key={result.fuelType}
+                        type="monotone"
+                        dataKey={fuelTypeLabels[result.fuelType as FuelType]}
+                        stroke={fuelTypeColors[result.fuelType as FuelType]}
+                        strokeWidth={3}
+                        dot={{ r: 5 }}
+                        activeDot={{ r: 7 }}
+                      />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+          </div>
         </div>
       )}
 

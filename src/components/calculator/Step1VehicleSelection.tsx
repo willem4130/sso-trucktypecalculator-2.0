@@ -8,6 +8,7 @@ import { api } from '@/trpc/react'
 import { cn } from '@/lib/utils'
 import { useState, useMemo } from 'react'
 import type { CalculationSession, VehicleType } from '@prisma/client'
+import { TruckIllustration } from '@/components/ui/truck-illustration'
 
 interface Step1Props {
   session: CalculationSession & {
@@ -284,9 +285,9 @@ export function Step1VehicleSelection({ session, onComplete }: Step1Props) {
                   {selectedVehicle.description}
                 </p>
 
-                {/* Vehicle Illustration Placeholder */}
-                <div className="mt-4 flex h-32 items-center justify-center rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900">
-                  <Truck className="h-16 w-16 text-gray-300 dark:text-gray-700" />
+                {/* Vehicle Illustration */}
+                <div className="mt-4 flex h-32 items-center justify-center rounded-lg border border-gray-200 bg-gradient-to-b from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-900 dark:to-gray-800">
+                  <TruckIllustration vehicleType={selectedVehicle.name} className="h-full w-full" />
                 </div>
               </Card>
 

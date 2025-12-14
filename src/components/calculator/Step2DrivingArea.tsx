@@ -20,6 +20,7 @@ import {
   Info,
 } from 'lucide-react'
 import { NetherlandsMap } from '@/components/maps/NetherlandsMap'
+import { TruckIllustration } from '@/components/ui/truck-illustration'
 import { api } from '@/trpc/react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
@@ -137,155 +138,233 @@ export function Step2DrivingArea({ session, onComplete }: Step2Props) {
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 rounded bg-gray-100 p-1 dark:bg-gray-800">
-              <button
-                onClick={() => setViewMode('simple')}
-                className={cn(
-                  'flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium transition-all',
-                  viewMode === 'simple'
-                    ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100'
-                    : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
-                )}
-                title="Overzicht - Kaart en selectie"
-              >
-                <LayoutList className="h-3.5 w-3.5" />
-                <span>Overzicht</span>
-              </button>
-              <button
-                onClick={() => setViewMode('detailed')}
-                className={cn(
-                  'flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium transition-all',
-                  viewMode === 'detailed'
-                    ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100'
-                    : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
-                )}
-                title="Analyse - Kosten en haalbaarheid"
-              >
-                <LayoutGrid className="h-3.5 w-3.5" />
-                <span>Analyse</span>
-              </button>
-            </div>
-
-            {session.vehicleType && (
-              <div className="text-right">
-                <div className="text-xs text-gray-500 dark:text-gray-400">Voertuig</div>
-                <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {session.vehicleType.name}
-                </div>
-              </div>
-            )}
+          <div className="flex items-center gap-1 rounded bg-gray-100 p-1 dark:bg-gray-800">
+            <button
+              onClick={() => setViewMode('simple')}
+              className={cn(
+                'flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium transition-all',
+                viewMode === 'simple'
+                  ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100'
+                  : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+              )}
+              title="Overzicht - Kaart en selectie"
+            >
+              <LayoutList className="h-3.5 w-3.5" />
+              <span>Overzicht</span>
+            </button>
+            <button
+              onClick={() => setViewMode('detailed')}
+              className={cn(
+                'flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium transition-all',
+                viewMode === 'detailed'
+                  ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100'
+                  : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+              )}
+              title="Analyse - Kosten en haalbaarheid"
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+              <span>Analyse</span>
+            </button>
           </div>
         </div>
       </div>
 
+      {/* Prominent Vehicle Selection Display */}
+      {session.vehicleType && (
+        <Card className="border-2 border-orange-500 bg-gradient-to-r from-orange-50 to-white dark:border-orange-600 dark:from-orange-950/20 dark:to-gray-900">
+          <div className="flex items-center gap-4 p-4">
+            {/* Icon/Illustration */}
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg border-2 border-orange-200 bg-white p-2 dark:border-orange-800 dark:bg-gray-800">
+              <TruckIllustration vehicleType={session.vehicleType.name} className="h-full w-full" />
+            </div>
+
+            {/* Vehicle Info */}
+            <div className="flex-1">
+              <div className="mb-1 flex items-center gap-2">
+                <span className="rounded-full bg-orange-500 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                  Geselecteerd
+                </span>
+                <Check className="h-4 w-4 text-orange-500" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                {session.vehicleType.name}
+              </h3>
+              <div className="mt-1 flex items-center gap-4 text-xs text-gray-600 dark:text-gray-400">
+                {session.vehicleType.defaultGvw && (
+                  <span className="flex items-center gap-1">
+                    <span className="font-semibold">GVW:</span>
+                    <span className="font-mono tabular-nums">
+                      {(session.vehicleType.defaultGvw / 1000).toFixed(1)}t
+                    </span>
+                  </span>
+                )}
+                {session.vehicleType.defaultPayload && (
+                  <span className="flex items-center gap-1">
+                    <span className="font-semibold">Lading:</span>
+                    <span className="font-mono tabular-nums">
+                      {(session.vehicleType.defaultPayload / 1000).toFixed(1)}t
+                    </span>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Step Indicator */}
+            <div className="text-right">
+              <div className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                Stap 2 van 4
+              </div>
+              <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">Rijgebied kiezen</div>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Main Layout */}
       <div className="grid gap-3 lg:grid-cols-12">
-        {/* Left: Area Selection */}
+        {/* Left: Area Selection + Map */}
         <div className={cn(viewMode === 'simple' ? 'lg:col-span-4' : 'lg:col-span-4')}>
-          <Card className="border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
-            <div className="border-b border-gray-200 px-4 py-2.5 dark:border-gray-700">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                Rijgebieden
-              </h3>
-            </div>
-            <div className="divide-y divide-gray-100 dark:divide-gray-800">
-              {drivingAreas?.map((area: DrivingArea, index: number) => {
-                const isSelected = selectedId === area.id
-                const Icon = areaIcons[area.name as keyof typeof areaIcons] || MapPin
-                const costs = estimateAnnualCosts(area, session.vehicleType)
-
-                return (
-                  <motion.div
-                    key={area.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: index * 0.03 }}
-                    className={cn(
-                      'group relative cursor-pointer px-4 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50',
-                      {
-                        'bg-orange-50/50 dark:bg-orange-950/10': isSelected,
-                      }
-                    )}
-                    onClick={() => handleSelect(area.id)}
-                    onMouseEnter={() => setHoveredId(area.id)}
-                    onMouseLeave={() => setHoveredId(null)}
-                  >
-                    <div className="flex items-center gap-3">
-                      {/* Selection Indicator */}
-                      <div
-                        className={cn('absolute left-0 top-0 h-full w-0.5 transition-colors', {
-                          'bg-orange-500': isSelected,
-                          'bg-transparent group-hover:bg-gray-300': !isSelected,
-                        })}
-                      />
-
-                      {/* Icon */}
-                      <div
-                        className={cn(
-                          'flex h-8 w-8 shrink-0 items-center justify-center rounded transition-colors',
-                          {
-                            'bg-orange-500 text-white': isSelected,
-                            'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400':
-                              !isSelected,
-                          }
-                        )}
-                      >
-                        <Icon className="h-4 w-4" />
-                      </div>
-
-                      {/* Content */}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between">
-                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                            {area.name}
-                          </div>
-                          {isSelected && <Check className="h-4 w-4 shrink-0 text-orange-500" />}
-                        </div>
-                        <div className="mt-0.5 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                          <span>{(area.defaultKmPerYear / 1000).toFixed(0)}k km/jr</span>
-                          {costs && (
-                            <>
-                              <span>•</span>
-                              <span className="font-medium">
-                                ~€{(costs.totalAnnual / 1000).toFixed(0)}k/jr
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )
-              })}
-            </div>
-          </Card>
-
-          {/* Continue Button */}
-          {selectedArea && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3">
-              <Button onClick={handleContinue} className="w-full bg-orange-500 hover:bg-orange-600">
-                Ga door naar Parameters
-              </Button>
-            </motion.div>
-          )}
-        </div>
-
-        {/* Right: Business Insights Dashboard */}
-        <div className="lg:col-span-8">
-          {viewMode === 'simple' && (
-            <Card className="overflow-hidden border-gray-200 dark:border-gray-700">
-              <div className="border-b border-gray-200 bg-gray-50 px-4 py-2.5 dark:border-gray-700 dark:bg-gray-900">
+          <div className="space-y-3">
+            {/* Area Selection Card */}
+            <Card className="border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+              <div className="border-b border-gray-200 px-4 py-2.5 dark:border-gray-700">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Dekkingsgebied Nederland
+                  Rijgebieden
                 </h3>
               </div>
-              <div className="h-[400px] p-4">
+              <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                {drivingAreas?.map((area: DrivingArea, index: number) => {
+                  const isSelected = selectedId === area.id
+                  const Icon = areaIcons[area.name as keyof typeof areaIcons] || MapPin
+                  const costs = estimateAnnualCosts(area, session.vehicleType)
+
+                  return (
+                    <motion.div
+                      key={area.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: index * 0.03 }}
+                      className={cn(
+                        'group relative cursor-pointer px-4 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50',
+                        {
+                          'bg-orange-50/50 dark:bg-orange-950/10': isSelected,
+                        }
+                      )}
+                      onClick={() => handleSelect(area.id)}
+                      onMouseEnter={() => setHoveredId(area.id)}
+                      onMouseLeave={() => setHoveredId(null)}
+                    >
+                      <div className="flex items-center gap-3">
+                        {/* Selection Indicator */}
+                        <div
+                          className={cn('absolute left-0 top-0 h-full w-0.5 transition-colors', {
+                            'bg-orange-500': isSelected,
+                            'bg-transparent group-hover:bg-gray-300': !isSelected,
+                          })}
+                        />
+
+                        {/* Icon */}
+                        <div
+                          className={cn(
+                            'flex h-8 w-8 shrink-0 items-center justify-center rounded transition-colors',
+                            {
+                              'bg-orange-500 text-white': isSelected,
+                              'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400':
+                                !isSelected,
+                            }
+                          )}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </div>
+
+                        {/* Content */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {area.name}
+                            </div>
+                            {isSelected && <Check className="h-4 w-4 shrink-0 text-orange-500" />}
+                          </div>
+                          <div className="mt-0.5 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                            <span>{(area.defaultKmPerYear / 1000).toFixed(0)}k km/jr</span>
+                            {costs && (
+                              <>
+                                <span>•</span>
+                                <span className="font-medium">
+                                  ~€{(costs.totalAnnual / 1000).toFixed(0)}k/jr
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )
+                })}
+              </div>
+            </Card>
+
+            {/* Map Card - Compact Bottom Left */}
+            <Card className="overflow-hidden border-gray-200 dark:border-gray-700">
+              <div className="border-b border-gray-200 bg-gray-50 px-4 py-2 dark:border-gray-700 dark:bg-gray-900">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Dekkingsgebied
+                </h3>
+              </div>
+              <div className="h-[240px] p-3">
                 <NetherlandsMap
                   selectedArea={selectedArea?.name || null}
                   hoveredArea={displayArea?.name || null}
                 />
+              </div>
+            </Card>
+
+            {/* Continue Button */}
+            {selectedArea && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <Button
+                  onClick={handleContinue}
+                  className="w-full bg-orange-500 hover:bg-orange-600"
+                >
+                  Ga door naar Parameters
+                </Button>
+              </motion.div>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Business Insights Dashboard */}
+        <div className="lg:col-span-8">
+          {viewMode === 'simple' && displayArea && (
+            <Card className="flex h-full items-center justify-center border-gray-200 p-8 dark:border-gray-700">
+              <div className="text-center">
+                <MapPin className="mx-auto h-12 w-12 text-orange-500" />
+                <h3 className="mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  {displayArea.name}
+                </h3>
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  {(displayArea.defaultKmPerYear / 1000).toFixed(0)}k km/jaar
+                </p>
+                <div className="mt-4 inline-flex items-center gap-2 rounded-lg bg-orange-50 px-4 py-2 dark:bg-orange-950/20">
+                  <Info className="h-4 w-4 text-orange-600" />
+                  <span className="text-sm text-orange-900 dark:text-orange-100">
+                    Schakel naar Analyse voor gedetailleerde inzichten
+                  </span>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {viewMode === 'simple' && !displayArea && (
+            <Card className="flex h-full items-center justify-center border-gray-200 dark:border-gray-700">
+              <div className="text-center">
+                <MapPin className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-4 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                  Selecteer een rijgebied
+                </h3>
+                <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                  Kies een gebied links om de kaart te zien
+                </p>
               </div>
             </Card>
           )}
@@ -583,21 +662,6 @@ export function Step2DrivingArea({ session, onComplete }: Step2Props) {
                   </div>
                 </Card>
               </div>
-
-              {/* Map */}
-              <Card className="overflow-hidden border-gray-200 dark:border-gray-700">
-                <div className="border-b border-gray-200 bg-gray-50 px-4 py-2.5 dark:border-gray-700 dark:bg-gray-900">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                    Dekkingsgebied Nederland
-                  </h3>
-                </div>
-                <div className="h-[300px] p-4">
-                  <NetherlandsMap
-                    selectedArea={selectedArea?.name || null}
-                    hoveredArea={displayArea?.name || null}
-                  />
-                </div>
-              </Card>
             </div>
           )}
 

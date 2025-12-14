@@ -1102,8 +1102,8 @@ export function Step3Parameters({ session, onComplete }: Step3Props) {
 
                   return (
                     <div className="space-y-2">
-                      {/* Top 3 Impact Drivers */}
-                      {costs.slice(0, 3).map((cost, index) => (
+                      {/* Top 5 Impact Drivers */}
+                      {costs.slice(0, 5).map((cost, index) => (
                         <div key={cost.name} className="space-y-0.5">
                           <div className="flex items-center justify-between text-[10px]">
                             <div className="flex items-center gap-1.5">
