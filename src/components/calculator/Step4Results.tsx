@@ -2180,6 +2180,337 @@ export function Step4Results({ session }: Step4Props) {
               </table>
             </div>
           </Card>
+
+          {/* CFO CASH FLOW DASHBOARD - Expert Mode */}
+          <div className="mt-6 space-y-6">
+            <div className="flex items-center justify-between border-b border-gray-200 pb-3 dark:border-gray-700">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-gray-100">
+                  💰 CFO Dashboard - Cashflow Analyse
+                </h3>
+                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                  Financiële impact en cashflow projectie
+                  {comparisonVehicles.length > 0 &&
+                    ` • ${comparisonVehicles.length + 1} voertuigen in vergelijking`}
+                </p>
+              </div>
+              {comparisonVehicles.length < 2 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowVehicleSelector(!showVehicleSelector)}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Voertuig toevoegen
+                </Button>
+              )}
+            </div>
+
+            {/* Vehicle Comparison Selector */}
+            {showVehicleSelector && (
+              <Card className="border-orange-200 bg-orange-50/50 p-4 dark:border-orange-900 dark:bg-orange-950/20">
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                      Selecteer voertuig voor vergelijking
+                    </label>
+                    <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                      Hetzelfde rijgebied en parameters worden toegepast
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <select
+                      value={selectedVehicleId}
+                      onChange={(e) => setSelectedVehicleId(e.target.value)}
+                      className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800"
+                    >
+                      <option value="">Kies een voertuigtype...</option>
+                      {allVehicleTypes
+                        ?.filter((v) => v.id !== session.vehicleType?.id)
+                        .filter((v) => !comparisonVehicles.some((cv) => cv.vehicleTypeId === v.id))
+                        .map((vehicle) => (
+                          <option key={vehicle.id} value={vehicle.id}>
+                            {vehicle.name}
+                            {vehicle.defaultGvw ? ` (${vehicle.defaultGvw}kg GVW)` : ''}
+                          </option>
+                        ))}
+                    </select>
+                    <Button
+                      onClick={handleAddComparisonVehicle}
+                      disabled={!selectedVehicleId || calculateTCO.isPending}
+                      className="gap-2"
+                    >
+                      {calculateTCO.isPending ? 'Berekenen...' : 'Toevoegen'}
+                    </Button>
+                    <Button variant="outline" onClick={() => setShowVehicleSelector(false)}>
+                      Annuleren
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Currently Compared Vehicles */}
+            {comparisonVehicles.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                <Badge
+                  variant="outline"
+                  className="gap-2 border-gray-300 bg-gray-100 dark:border-gray-600 dark:bg-gray-800"
+                >
+                  {session.vehicleType?.name} (Primair)
+                </Badge>
+                {comparisonVehicles.map((vehicle) => (
+                  <Badge
+                    key={vehicle.vehicleTypeId}
+                    variant="outline"
+                    className="gap-2 border-orange-300 bg-orange-100 dark:border-orange-600 dark:bg-orange-900"
+                  >
+                    {vehicle.vehicleTypeName}
+                    <button
+                      onClick={() => handleRemoveComparisonVehicle(vehicle.vehicleTypeId)}
+                      className="ml-1 hover:text-red-600"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+
+            {/* CAPEX vs OPEX KPIs - Grouped by Fuel Type */}
+            <div className="grid gap-4 md:grid-cols-4">
+              {(['diesel', 'bev', 'fcev', 'h2ice'] as FuelType[])
+                .filter((fuelType) => selectedFuelTypes.includes(fuelType))
+                .map((fuelType) => {
+                  // Collect all vehicles' results for this fuel type
+                  const allVehiclesForFuelType = [
+                    {
+                      name: session.vehicleType?.name || 'Primair',
+                      isPrimary: true,
+                      result: results[fuelType],
+                    },
+                    ...comparisonVehicles.map((cv) => ({
+                      name: cv.vehicleTypeName,
+                      isPrimary: false,
+                      result: cv.results[fuelType],
+                    })),
+                  ].filter((v) => v.result) // Only show if result exists
+
+                  return (
+                    <div key={fuelType} className="space-y-3">
+                      {/* Fuel Type Header */}
+                      <div className="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                        <div
+                          className="h-2 w-2 rounded-full"
+                          style={{ backgroundColor: fuelTypeColors[fuelType] }}
+                        />
+                        <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                          {fuelTypeLabels[fuelType]}
+                        </span>
+                      </div>
+
+                      {/* Vehicle Cards */}
+                      {allVehiclesForFuelType.map((vehicle, idx) => {
+                        const result = vehicle.result
+                        if (!result) return null
+
+                        const purchaseCost = result.breakdown.purchaseCost
+                        const annualOpex =
+                          result.breakdown.fuelCost +
+                          result.breakdown.maintenanceCost +
+                          result.breakdown.taxesCost +
+                          result.breakdown.insuranceCost
+                        const monthlyOpex = annualOpex / 12
+                        const totalLifetime = result.totalCost
+
+                        return (
+                          <Card
+                            key={`${fuelType}-${idx}`}
+                            className={cn(
+                              'border-gray-200 p-3 dark:border-gray-700',
+                              vehicle.isPrimary &&
+                                'border-2 border-orange-300 dark:border-orange-600'
+                            )}
+                          >
+                            {/* Vehicle Name */}
+                            <div className="mb-2 text-[10px] font-semibold text-gray-700 dark:text-gray-300">
+                              {vehicle.name}
+                              {vehicle.isPrimary && ' (Primair)'}
+                            </div>
+
+                            <div className="space-y-2">
+                              {/* CAPEX */}
+                              <div>
+                                <div className="text-[9px] font-medium text-gray-500 dark:text-gray-400">
+                                  CAPEX
+                                </div>
+                                <div className="mt-0.5 text-base font-bold tabular-nums text-gray-900 dark:text-gray-100">
+                                  {formatCurrency(purchaseCost)}
+                                </div>
+                              </div>
+
+                              {/* Monthly OPEX */}
+                              <div className="border-t border-gray-100 pt-1.5 dark:border-gray-800">
+                                <div className="text-[9px] font-medium text-gray-500 dark:text-gray-400">
+                                  Monthly OPEX
+                                </div>
+                                <div className="mt-0.5 text-xs font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+                                  {formatCurrency(monthlyOpex)}/mnd
+                                </div>
+                              </div>
+
+                              {/* Annual OPEX */}
+                              <div>
+                                <div className="text-[9px] font-medium text-gray-500 dark:text-gray-400">
+                                  Annual OPEX
+                                </div>
+                                <div className="mt-0.5 text-xs font-semibold tabular-nums text-orange-600 dark:text-orange-400">
+                                  {formatCurrency(annualOpex)}/jr
+                                </div>
+                              </div>
+
+                              {/* Total Lifetime */}
+                              <div className="border-t border-gray-100 pt-1.5 dark:border-gray-800">
+                                <div className="text-[9px] font-medium text-gray-500 dark:text-gray-400">
+                                  Total {depreciationYears}yr
+                                </div>
+                                <div className="mt-0.5 text-sm font-bold tabular-nums text-gray-900 dark:text-gray-100">
+                                  {formatCurrency(totalLifetime)}
+                                </div>
+                              </div>
+                            </div>
+                          </Card>
+                        )
+                      })}
+                    </div>
+                  )
+                })}
+            </div>
+
+            {/* Cumulative Cash Flow Chart */}
+            <Card className="overflow-hidden">
+              <div className="border-b border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Cumulatieve Cashflow Projectie
+                  {comparisonVehicles.length > 0 && ' • Multi-Vehicle Vergelijking'}
+                </h3>
+              </div>
+              <div className="p-4">
+                <ResponsiveContainer
+                  width="100%"
+                  height={comparisonVehicles.length > 0 ? 400 : 300}
+                >
+                  <LineChart
+                    data={Array.from({ length: depreciationYears + 1 }, (_, i) => {
+                      const year = i
+                      const dataPoint: Record<string, number | string> = { year }
+
+                      // Primary vehicle
+                      const primaryVehicleName = session.vehicleType?.name || 'Primair'
+                      selectedFuelTypes.forEach((fuelType) => {
+                        const result = results[fuelType]
+                        if (result) {
+                          const purchaseCost = result.breakdown.purchaseCost
+                          const annualOpex =
+                            result.breakdown.fuelCost +
+                            result.breakdown.maintenanceCost +
+                            result.breakdown.taxesCost +
+                            result.breakdown.insuranceCost
+
+                          const cumulative =
+                            year === 0 ? purchaseCost : purchaseCost + annualOpex * year
+                          dataPoint[`${primaryVehicleName} - ${fuelTypeLabels[fuelType]}`] =
+                            cumulative
+                        }
+                      })
+
+                      // Comparison vehicles
+                      comparisonVehicles.forEach((vehicle) => {
+                        selectedFuelTypes.forEach((fuelType) => {
+                          const result = vehicle.results[fuelType]
+                          if (result) {
+                            const purchaseCost = result.breakdown.purchaseCost
+                            const annualOpex =
+                              result.breakdown.fuelCost +
+                              result.breakdown.maintenanceCost +
+                              result.breakdown.taxesCost +
+                              result.breakdown.insuranceCost
+
+                            const cumulative =
+                              year === 0 ? purchaseCost : purchaseCost + annualOpex * year
+                            dataPoint[`${vehicle.vehicleTypeName} - ${fuelTypeLabels[fuelType]}`] =
+                              cumulative
+                          }
+                        })
+                      })
+
+                      return dataPoint
+                    })}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="year"
+                      tick={{ fontSize: 12 }}
+                      stroke="#9ca3af"
+                      label={{ value: 'Jaar', position: 'insideBottom', offset: -5, fontSize: 12 }}
+                      style={{ fontFamily: 'var(--font-sans)' }}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 12 }}
+                      stroke="#9ca3af"
+                      tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`}
+                      style={{ fontFamily: 'var(--font-sans)' }}
+                    />
+                    <Tooltip
+                      formatter={(value: number) =>
+                        `€${value.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}`
+                      }
+                      contentStyle={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Legend
+                      wrapperStyle={{ fontSize: '11px', fontFamily: 'var(--font-sans)' }}
+                      iconType="line"
+                    />
+                    {/* Primary vehicle lines (solid) */}
+                    {selectedFuelTypes.map((fuelType) => (
+                      <Line
+                        key={`primary-${fuelType}`}
+                        type="monotone"
+                        dataKey={`${session.vehicleType?.name || 'Primair'} - ${fuelTypeLabels[fuelType]}`}
+                        stroke={fuelTypeColors[fuelType]}
+                        strokeWidth={3}
+                        strokeDasharray="0"
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    ))}
+                    {/* Comparison vehicle lines (dashed/dotted) */}
+                    {comparisonVehicles.map((vehicle, vehicleIdx) => {
+                      const strokeDasharray = vehicleIdx === 0 ? '5 5' : '2 2' // First comparison: dashed, second: dotted
+                      return selectedFuelTypes.map((fuelType) => (
+                        <Line
+                          key={`${vehicle.vehicleTypeId}-${fuelType}`}
+                          type="monotone"
+                          dataKey={`${vehicle.vehicleTypeName} - ${fuelTypeLabels[fuelType]}`}
+                          stroke={fuelTypeColors[fuelType]}
+                          strokeWidth={2.5}
+                          strokeDasharray={strokeDasharray}
+                          strokeOpacity={0.8}
+                          dot={{ r: 3 }}
+                          activeDot={{ r: 5 }}
+                        />
+                      ))
+                    })}
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+          </div>
         </div>
       )}
 
