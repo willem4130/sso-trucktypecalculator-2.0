@@ -7,25 +7,28 @@ export default function CalculatorPage() {
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-grid-gray-200/50 dark:bg-grid-gray-800/50 bg-[size:20px_20px] opacity-20" />
 
-      {/* SCEX Branding - Top Right */}
-      <div className="absolute right-8 top-8 z-10">
-        <Image
-          src="/branding/SCEX logo letters.png"
-          alt="SCEX Logo"
-          width={120}
-          height={40}
-          className="opacity-80 transition-opacity hover:opacity-100"
-        />
-      </div>
-
-      {/* SCEXie Mascot - Bottom Right (subtle) */}
-      <div className="pointer-events-none fixed bottom-0 right-0 z-0 opacity-10 dark:opacity-5">
+      {/* SCEXie Mascot - Bottom Right - Behind everything */}
+      <div className="pointer-events-none fixed bottom-0 right-0 -z-10 opacity-50 dark:opacity-40">
         <Image
           src="/branding/scexie-mascot.png"
           alt="SCEXie Mascot"
-          width={300}
-          height={300}
+          width={400}
+          height={400}
           className="object-contain"
+          unoptimized
+        />
+      </div>
+
+      {/* SCEX Branding - Top Right - Always on top */}
+      <div className="absolute right-8 top-8 z-50 rounded-lg bg-gradient-to-br from-[#08192c] to-[#0a2847] p-3 shadow-xl">
+        <Image
+          src="/branding/SCEX logo letters.png"
+          alt="SCEX Logo"
+          width={180}
+          height={60}
+          className="h-auto w-auto max-h-12 object-contain transition-opacity hover:opacity-90"
+          priority
+          unoptimized
         />
       </div>
 
