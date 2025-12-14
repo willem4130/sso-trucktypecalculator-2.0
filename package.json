@@ -22,6 +22,10 @@
   },
   "homepage": "https://github.com/willem4130/sso-trucktypecalculator-2.0#readme",
   "author": "Willem van den Berg <willem@scex.nl>",
+  "engines": {
+    "node": ">=18.x",
+    "npm": ">=9.x"
+  },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
