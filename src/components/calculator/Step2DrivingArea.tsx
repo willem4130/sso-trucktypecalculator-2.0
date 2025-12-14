@@ -368,211 +368,221 @@ export function Step2DrivingArea({ session, onComplete }: Step2Props) {
                 })()}
               </div>
 
-              {/* Infrastructure Readiness */}
-              <Card className="border-gray-200 dark:border-gray-700">
-                <div className="border-b border-gray-200 bg-gray-50 px-4 py-2.5 dark:border-gray-700 dark:bg-gray-900">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                    Infrastructuur Gereedheid
-                  </h3>
-                </div>
-                <div className="p-4 space-y-3">
-                  {(() => {
-                    const infra = getInfrastructureReadiness(displayArea)
-                    return (
-                      <>
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between text-xs">
-                            <div className="flex items-center gap-2">
-                              <Battery className="h-3.5 w-3.5 text-green-600" />
-                              <span className="font-medium text-gray-900 dark:text-gray-100">
-                                Laadinfrastructuur (BEV)
-                              </span>
-                            </div>
-                            <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">
-                              {infra.charging}%
-                            </span>
-                          </div>
-                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
-                            <div
-                              className="h-full rounded-full bg-green-500 transition-all"
-                              style={{ width: `${infra.charging}%` }}
-                            />
-                          </div>
-                          <div className="text-xs text-gray-600 dark:text-gray-400">
-                            {infra.charging >= 80
-                              ? '✓ Uitstekende dekking, geschikt voor dagelijks gebruik'
-                              : infra.charging >= 60
-                                ? '⚠ Adequate dekking, planning vereist'
-                                : '⚠ Beperkte dekking, niet aanbevolen'}
-                          </div>
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between text-xs">
-                            <div className="flex items-center gap-2">
-                              <Zap className="h-3.5 w-3.5 text-cyan-600" />
-                              <span className="font-medium text-gray-900 dark:text-gray-100">
-                                Waterstofstations (FCEV)
-                              </span>
-                            </div>
-                            <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">
-                              {infra.hydrogen}%
-                            </span>
-                          </div>
-                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
-                            <div
-                              className="h-full rounded-full bg-cyan-500 transition-all"
-                              style={{ width: `${infra.hydrogen}%` }}
-                            />
-                          </div>
-                          <div className="text-xs text-gray-600 dark:text-gray-400">
-                            {infra.hydrogen >= 60
-                              ? '✓ Groeiende dekking, geschikt met planning'
-                              : infra.hydrogen >= 40
-                                ? '⚠ Beperkte stations, zorgvuldige route planning'
-                                : '⚠ Zeer beperkt, alleen voor pilotprojecten'}
-                          </div>
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between text-xs">
-                            <div className="flex items-center gap-2">
-                              <Fuel className="h-3.5 w-3.5 text-gray-600" />
-                              <span className="font-medium text-gray-900 dark:text-gray-100">
-                                Diesel/Benzine Tankstations
-                              </span>
-                            </div>
-                            <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">
-                              {infra.diesel}%
-                            </span>
-                          </div>
-                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
-                            <div
-                              className="h-full rounded-full bg-gray-600 transition-all"
-                              style={{ width: `${infra.diesel}%` }}
-                            />
-                          </div>
-                          <div className="text-xs text-gray-600 dark:text-gray-400">
-                            ✓ Volledige dekking, geen beperkingen
-                          </div>
-                        </div>
-                      </>
-                    )
-                  })()}
-                </div>
-              </Card>
-
-              {/* Operational Feasibility */}
-              <Card className="border-gray-200 dark:border-gray-700">
-                <div className="border-b border-gray-200 bg-gray-50 px-4 py-2.5 dark:border-gray-700 dark:bg-gray-900">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                    Operationele Haalbaarheid
-                  </h3>
-                </div>
-                <div className="p-4">
-                  {(() => {
-                    const feasibility = getOperationalFeasibility(displayArea, session.vehicleType)
-                    const complexityText = {
-                      Regionaal: 'Laag - Kortere routes, frequente mogelijkheden om te laden',
-                      Nationaal: 'Gemiddeld - Voldoende laadinfra, planning noodzakelijk',
-                      'Nationaal+': 'Hoog - Langere routes, nauwkeurige planning en backup vereist',
-                      Internationaal:
-                        'Zeer hoog - Grensoverschrijdend, complexe planning, infrastructuur varieert',
-                    }
-
-                    return (
-                      <div className="space-y-4">
-                        <div className="flex items-start gap-3">
-                          <div
-                            className={cn(
-                              'flex h-16 w-16 shrink-0 items-center justify-center rounded-lg',
-                              feasibility >= 70
-                                ? 'bg-green-100 dark:bg-green-950/20'
-                                : feasibility >= 50
-                                  ? 'bg-amber-100 dark:bg-amber-950/20'
-                                  : 'bg-red-100 dark:bg-red-950/20'
-                            )}
-                          >
-                            <div className="text-center">
-                              <div
-                                className={cn(
-                                  'text-2xl font-bold tabular-nums',
-                                  feasibility >= 70
-                                    ? 'text-green-600'
-                                    : feasibility >= 50
-                                      ? 'text-amber-600'
-                                      : 'text-red-600'
-                                )}
-                              >
-                                {feasibility}
+              {/* Infrastructure & Feasibility - Side by Side */}
+              <div className="grid gap-3 lg:grid-cols-2">
+                {/* Infrastructure Readiness */}
+                <Card className="border-gray-200 dark:border-gray-700">
+                  <div className="border-b border-gray-200 bg-gray-50 px-4 py-2.5 dark:border-gray-700 dark:bg-gray-900">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                      Infrastructuur Gereedheid
+                    </h3>
+                  </div>
+                  <div className="space-y-3 p-4">
+                    {(() => {
+                      const infra = getInfrastructureReadiness(displayArea)
+                      return (
+                        <>
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between text-xs">
+                              <div className="flex items-center gap-2">
+                                <Battery className="h-3.5 w-3.5 text-green-600" />
+                                <span className="font-medium text-gray-900 dark:text-gray-100">
+                                  Laadinfrastructuur (BEV)
+                                </span>
                               </div>
-                              <div className="text-xs text-gray-600 dark:text-gray-400">score</div>
+                              <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+                                {infra.charging}%
+                              </span>
+                            </div>
+                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                              <div
+                                className="h-full rounded-full bg-green-500 transition-all"
+                                style={{ width: `${infra.charging}%` }}
+                              />
+                            </div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400">
+                              {infra.charging >= 80
+                                ? '✓ Uitstekende dekking, geschikt voor dagelijks gebruik'
+                                : infra.charging >= 60
+                                  ? '⚠ Adequate dekking, planning vereist'
+                                  : '⚠ Beperkte dekking, niet aanbevolen'}
                             </div>
                           </div>
 
-                          <div className="flex-1">
-                            <div className="mb-2 flex items-center gap-2">
-                              {feasibility >= 70 ? (
-                                <CheckCircle className="h-4 w-4 text-green-600" />
-                              ) : feasibility >= 50 ? (
-                                <Info className="h-4 w-4 text-amber-600" />
-                              ) : (
-                                <AlertCircle className="h-4 w-4 text-red-600" />
-                              )}
-                              <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                                {feasibility >= 70
-                                  ? 'Goed Haalbaar'
-                                  : feasibility >= 50
-                                    ? 'Haalbaar met Planning'
-                                    : 'Uitdagend'}
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between text-xs">
+                              <div className="flex items-center gap-2">
+                                <Zap className="h-3.5 w-3.5 text-cyan-600" />
+                                <span className="font-medium text-gray-900 dark:text-gray-100">
+                                  Waterstofstations (FCEV)
+                                </span>
+                              </div>
+                              <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+                                {infra.hydrogen}%
                               </span>
                             </div>
-                            <p className="text-xs text-gray-600 dark:text-gray-400">
-                              <strong>Complexiteit:</strong>{' '}
-                              {complexityText[displayArea.name as keyof typeof complexityText]}
+                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                              <div
+                                className="h-full rounded-full bg-cyan-500 transition-all"
+                                style={{ width: `${infra.hydrogen}%` }}
+                              />
+                            </div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400">
+                              {infra.hydrogen >= 60
+                                ? '✓ Groeiende dekking, geschikt met planning'
+                                : infra.hydrogen >= 40
+                                  ? '⚠ Beperkte stations, zorgvuldige route planning'
+                                  : '⚠ Zeer beperkt, alleen voor pilotprojecten'}
+                            </div>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between text-xs">
+                              <div className="flex items-center gap-2">
+                                <Fuel className="h-3.5 w-3.5 text-gray-600" />
+                                <span className="font-medium text-gray-900 dark:text-gray-100">
+                                  Diesel/Benzine Tankstations
+                                </span>
+                              </div>
+                              <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+                                {infra.diesel}%
+                              </span>
+                            </div>
+                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                              <div
+                                className="h-full rounded-full bg-gray-600 transition-all"
+                                style={{ width: `${infra.diesel}%` }}
+                              />
+                            </div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400">
+                              ✓ Volledige dekking, geen beperkingen
+                            </div>
+                          </div>
+                        </>
+                      )
+                    })()}
+                  </div>
+                </Card>
+
+                {/* Operational Feasibility */}
+                <Card className="border-gray-200 dark:border-gray-700">
+                  <div className="border-b border-gray-200 bg-gray-50 px-4 py-2.5 dark:border-gray-700 dark:bg-gray-900">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                      Operationele Haalbaarheid
+                    </h3>
+                  </div>
+                  <div className="p-4">
+                    {(() => {
+                      const feasibility = getOperationalFeasibility(
+                        displayArea,
+                        session.vehicleType
+                      )
+                      const complexityText = {
+                        Regionaal: 'Laag - Kortere routes, frequente mogelijkheden om te laden',
+                        Nationaal: 'Gemiddeld - Voldoende laadinfra, planning noodzakelijk',
+                        'Nationaal+':
+                          'Hoog - Langere routes, nauwkeurige planning en backup vereist',
+                        Internationaal:
+                          'Zeer hoog - Grensoverschrijdend, complexe planning, infrastructuur varieert',
+                      }
+
+                      return (
+                        <div className="space-y-4">
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={cn(
+                                'flex h-16 w-16 shrink-0 items-center justify-center rounded-lg',
+                                feasibility >= 70
+                                  ? 'bg-green-100 dark:bg-green-950/20'
+                                  : feasibility >= 50
+                                    ? 'bg-amber-100 dark:bg-amber-950/20'
+                                    : 'bg-red-100 dark:bg-red-950/20'
+                              )}
+                            >
+                              <div className="text-center">
+                                <div
+                                  className={cn(
+                                    'text-2xl font-bold tabular-nums',
+                                    feasibility >= 70
+                                      ? 'text-green-600'
+                                      : feasibility >= 50
+                                        ? 'text-amber-600'
+                                        : 'text-red-600'
+                                  )}
+                                >
+                                  {feasibility}
+                                </div>
+                                <div className="text-xs text-gray-600 dark:text-gray-400">
+                                  score
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex-1">
+                              <div className="mb-2 flex items-center gap-2">
+                                {feasibility >= 70 ? (
+                                  <CheckCircle className="h-4 w-4 text-green-600" />
+                                ) : feasibility >= 50 ? (
+                                  <Info className="h-4 w-4 text-amber-600" />
+                                ) : (
+                                  <AlertCircle className="h-4 w-4 text-red-600" />
+                                )}
+                                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                  {feasibility >= 70
+                                    ? 'Goed Haalbaar'
+                                    : feasibility >= 50
+                                      ? 'Haalbaar met Planning'
+                                      : 'Uitdagend'}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-600 dark:text-gray-400">
+                                <strong>Complexiteit:</strong>{' '}
+                                {complexityText[displayArea.name as keyof typeof complexityText]}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950/20">
+                            <div className="mb-1.5 flex items-center gap-2">
+                              <Info className="h-4 w-4 text-blue-600" />
+                              <span className="text-xs font-semibold text-blue-900 dark:text-blue-100">
+                                Zakelijke Aanbeveling
+                              </span>
+                            </div>
+                            <p className="text-xs text-blue-800 dark:text-blue-200">
+                              {displayArea.name === 'Regionaal' && (
+                                <>
+                                  BEV zeer geschikt voor regionale routes. Lage operationele kosten,
+                                  uitstekende laadinfra. <strong>ROI: 3-4 jaar</strong>
+                                </>
+                              )}
+                              {displayArea.name === 'Nationaal' && (
+                                <>
+                                  BEV/FCEV geschikt met goede planning. BEV voordeliger, FCEV voor
+                                  langere single-trips. <strong>ROI: 4-5 jaar</strong>
+                                </>
+                              )}
+                              {displayArea.name === 'Nationaal+' && (
+                                <>
+                                  FCEV of Diesel aanbevolen. BEV mogelijk met uitgebreide
+                                  laadinfrastructuur. <strong>ROI: 5-6 jaar</strong>
+                                </>
+                              )}
+                              {displayArea.name === 'Internationaal' && (
+                                <>
+                                  Diesel of FCEV aanbevolen voor internationale routes. BEV
+                                  uitdagend door infrastructuurverschillen.{' '}
+                                  <strong>ROI: 6-7 jaar</strong>
+                                </>
+                              )}
                             </p>
                           </div>
                         </div>
-
-                        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950/20">
-                          <div className="mb-1.5 flex items-center gap-2">
-                            <Info className="h-4 w-4 text-blue-600" />
-                            <span className="text-xs font-semibold text-blue-900 dark:text-blue-100">
-                              Zakelijke Aanbeveling
-                            </span>
-                          </div>
-                          <p className="text-xs text-blue-800 dark:text-blue-200">
-                            {displayArea.name === 'Regionaal' && (
-                              <>
-                                BEV zeer geschikt voor regionale routes. Lage operationele kosten,
-                                uitstekende laadinfra. <strong>ROI: 3-4 jaar</strong>
-                              </>
-                            )}
-                            {displayArea.name === 'Nationaal' && (
-                              <>
-                                BEV/FCEV geschikt met goede planning. BEV voordeliger, FCEV voor
-                                langere single-trips. <strong>ROI: 4-5 jaar</strong>
-                              </>
-                            )}
-                            {displayArea.name === 'Nationaal+' && (
-                              <>
-                                FCEV of Diesel aanbevolen. BEV mogelijk met uitgebreide
-                                laadinfrastructuur. <strong>ROI: 5-6 jaar</strong>
-                              </>
-                            )}
-                            {displayArea.name === 'Internationaal' && (
-                              <>
-                                Diesel of FCEV aanbevolen voor internationale routes. BEV uitdagend
-                                door infrastructuurverschillen. <strong>ROI: 6-7 jaar</strong>
-                              </>
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                    )
-                  })()}
-                </div>
-              </Card>
+                      )
+                    })()}
+                  </div>
+                </Card>
+              </div>
 
               {/* Map */}
               <Card className="overflow-hidden border-gray-200 dark:border-gray-700">

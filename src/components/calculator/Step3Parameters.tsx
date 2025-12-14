@@ -125,15 +125,15 @@ const fuelTypeColors: Record<FuelType, string> = {
   h2ice: '#8b5cf6', // purple
 }
 
-// Fuel prices (2026 estimates per unit)
+// Fuel prices (2026 estimates per unit - synced with backend preset)
 const fuelPrices: Record<FuelType, number> = {
-  diesel: 1.8, // €/L
+  diesel: 1.85, // €/L
   bev: 0.35, // €/kWh
   fcev: 10, // €/kg
-  h2ice: 8, // €/kg
+  h2ice: 10, // €/kg (same as FCEV)
 }
 
-// Helper function to calculate live TCO preview
+// Helper function to calculate live TCO preview (synced with backend logic)
 const calculateLiveTCO = (formData: FormData) => {
   const purchasePrice = parseFloat(formData.purchasePrice) || 0
   const kmPerYear = parseFloat(formData.kmPerYear) || 0
@@ -142,9 +142,9 @@ const calculateLiveTCO = (formData: FormData) => {
   const truckToll = parseFloat(formData.truckToll) || 0
   const subsidy = parseFloat(formData.subsidy) || 0
   const interestRate = parseFloat(formData.interestRate) || 3.5
-  const depreciationYears = parseFloat(formData.depreciationYears) || 7
+  const depreciationYears = parseFloat(formData.depreciationYears) || 5 // Backend default
   const maintenanceCostPerKm = parseFloat(formData.maintenanceCostPerKm) || 0.15
-  const insurancePercentage = parseFloat(formData.insurancePercentage) || 1.5
+  const insurancePercentage = parseFloat(formData.insurancePercentage) || 2.5 // Backend default
 
   // Calculate annual costs
   const fuelPrice = fuelPrices[formData.fuelType]
@@ -156,16 +156,15 @@ const calculateLiveTCO = (formData: FormData) => {
   const annualOperatingCosts =
     fuelCostPerYear + maintenanceCostPerYear + insuranceCostPerYear + motorTax + truckToll
 
-  // Calculate depreciation
-  const netPurchasePrice = purchasePrice - subsidy
-  const annualDepreciation = netPurchasePrice / depreciationYears
-  const interestCost = (netPurchasePrice * interestRate) / 100
+  // Calculate depreciation and interest on GROSS purchase price (backend logic)
+  const annualDepreciation = purchasePrice / depreciationYears
+  const interestCostPerYear = (purchasePrice * interestRate) / 100
 
-  // Total annual TCO
-  const totalAnnualTCO = annualOperatingCosts + annualDepreciation + interestCost
+  // Total annual TCO (before subsidy)
+  const totalAnnualTCO = annualOperatingCosts + annualDepreciation + interestCostPerYear
 
-  // TCO over full ownership period
-  const totalTCO = totalAnnualTCO * depreciationYears
+  // TCO over full ownership period (subsidy subtracted at END - backend logic)
+  const totalTCO = totalAnnualTCO * depreciationYears - subsidy
 
   return {
     fuelCost: fuelCostPerYear,
@@ -173,7 +172,7 @@ const calculateLiveTCO = (formData: FormData) => {
     insurance: insuranceCostPerYear,
     taxes: motorTax + truckToll,
     depreciation: annualDepreciation,
-    interest: interestCost,
+    interest: interestCostPerYear,
     annualTotal: totalAnnualTCO,
     lifetimeTotal: totalTCO,
   }
@@ -236,11 +235,11 @@ export function Step3Parameters({ session, onComplete }: Step3Props) {
 
       // Financial
       interestRate: saved?.interestRate?.toString() || '3.5',
-      depreciationYears: saved?.depreciationYears?.toString() || '7',
+      depreciationYears: saved?.depreciationYears?.toString() || '5',
 
       // Extra
       maintenanceCostPerKm: saved?.maintenanceCostPerKm?.toString() || '0.15',
-      insurancePercentage: saved?.insurancePercentage?.toString() || '1.5',
+      insurancePercentage: saved?.insurancePercentage?.toString() || '2.5',
     }
   })
 
@@ -463,7 +462,7 @@ export function Step3Parameters({ session, onComplete }: Step3Props) {
         </p>
       </div>
 
-      {/* Grid Layout: Form + Live Preview Sidebar */}
+      {/* Top Grid: Form + KPI Cards */}
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Left: Parameter Form (8 columns) */}
         <div className="lg:col-span-8">
@@ -739,13 +738,13 @@ export function Step3Parameters({ session, onComplete }: Step3Props) {
                   <Label htmlFor="depreciationYears" className="flex items-center gap-1">
                     Afschrijvingsperiode (jaren)
                     <Badge variant="secondary" className="ml-2 text-xs">
-                      Standaard: 7 jaar
+                      Standaard: 5 jaar
                     </Badge>
                   </Label>
                   <Input
                     id="depreciationYears"
                     type="number"
-                    placeholder="7"
+                    placeholder="5"
                     value={formData.depreciationYears}
                     onChange={(e) => handleInputChange('depreciationYears', e.target.value)}
                     className="mt-1"
@@ -783,14 +782,14 @@ export function Step3Parameters({ session, onComplete }: Step3Props) {
                   <Label htmlFor="insurancePercentage" className="flex items-center gap-1">
                     Verzekering (% van aankoopprijs)
                     <Badge variant="secondary" className="ml-2 text-xs">
-                      Standaard: 1.5%
+                      Standaard: 2.5%
                     </Badge>
                   </Label>
                   <Input
                     id="insurancePercentage"
                     type="number"
                     step="0.1"
-                    placeholder="1.5"
+                    placeholder="2.5"
                     value={formData.insurancePercentage}
                     onChange={(e) => handleInputChange('insurancePercentage', e.target.value)}
                     className="mt-1"
@@ -818,73 +817,123 @@ export function Step3Parameters({ session, onComplete }: Step3Props) {
           </motion.div>
         </div>
 
-        {/* Right: Live TCO Preview Sidebar (4 columns) */}
+        {/* Right: KPI Cards Only (4 columns) */}
         <div className="lg:col-span-4">
-          <div className="sticky top-4 space-y-3">
-            {/* Header Card */}
-            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-              <div className="border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-orange-500" />
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                    Live TCO Preview
-                  </h3>
+          {/* KPI Card */}
+          <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+            <div className="border-b border-gray-200 dark:border-gray-700 px-3 py-2">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-3.5 w-3.5 text-orange-500" />
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Live TCO Preview
+                </h3>
+              </div>
+            </div>
+
+            {/* KPI Cards - Horizontal Layout */}
+            <div className="p-3 grid grid-cols-2 gap-3">
+              <div>
+                <div className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  Jaarlijkse TCO
                 </div>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Real-time kosten update
+                <div className="mt-1 text-xl font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+                  €
+                  {hasValidData
+                    ? livePreview.annualTotal.toLocaleString('nl-NL', {
+                        maximumFractionDigits: 0,
+                      })
+                    : '0'}
+                </div>
+                <div className="mt-0.5 text-[10px] text-gray-500 dark:text-gray-400">per jaar</div>
+              </div>
+
+              <div>
+                <div className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  Totale TCO
+                </div>
+                <div className="mt-1 text-xl font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+                  €
+                  {hasValidData
+                    ? livePreview.lifetimeTotal.toLocaleString('nl-NL', {
+                        maximumFractionDigits: 0,
+                      })
+                    : '0'}
+                </div>
+                <div className="mt-0.5 text-[10px] text-gray-500 dark:text-gray-400">
+                  {formData.depreciationYears || '7'} jaar
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Empty State - Only show when no valid data */}
+          {!hasValidData && (
+            <Card className="border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 mt-3">
+              <div className="p-4 text-center">
+                <Calculator className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Vul aankoopprijs en km/jaar in om een preview te zien
                 </p>
               </div>
-
-              {/* KPI Cards */}
-              <div className="p-4 space-y-3">
-                <div>
-                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                    Jaarlijkse TCO
-                  </div>
-                  <div className="mt-1 text-2xl font-semibold tabular-nums text-gray-900 dark:text-gray-100">
-                    €
-                    {hasValidData
-                      ? livePreview.annualTotal.toLocaleString('nl-NL', {
-                          maximumFractionDigits: 0,
-                        })
-                      : '0'}
-                  </div>
-                  <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">per jaar</div>
-                </div>
-
-                <div className="h-px bg-gray-200 dark:bg-gray-700" />
-
-                <div>
-                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                    Totale TCO
-                  </div>
-                  <div className="mt-1 text-2xl font-semibold tabular-nums text-gray-900 dark:text-gray-100">
-                    €
-                    {hasValidData
-                      ? livePreview.lifetimeTotal.toLocaleString('nl-NL', {
-                          maximumFractionDigits: 0,
-                        })
-                      : '0'}
-                  </div>
-                  <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                    over {formData.depreciationYears || '7'} jaar
-                  </div>
-                </div>
-              </div>
             </Card>
+          )}
+        </div>
+      </div>
 
-            {/* Cost Breakdown Chart */}
-            {hasValidData && (
-              <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-                <div className="border-b border-gray-200 dark:border-gray-700 px-4 py-2.5">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                    Kosten Verdeling
-                  </h3>
-                </div>
-                <div className="p-4">
-                  <ResponsiveContainer width="100%" height={280}>
-                    <BarChart
-                      data={[
+      {/* Bottom Grid: Charts Side by Side (Only when data is valid) */}
+      {hasValidData && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Left: Cost Breakdown Chart */}
+          <div>
+            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+              <div className="border-b border-gray-200 dark:border-gray-700 px-3 py-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Kosten Verdeling
+                </h3>
+              </div>
+              <div className="p-3">
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart
+                    data={[
+                      {
+                        name: 'Brandstof',
+                        value: livePreview.fuelCost,
+                        color: fuelTypeColors[formData.fuelType],
+                      },
+                      { name: 'Onderhoud', value: livePreview.maintenance, color: '#f59e0b' },
+                      { name: 'Verzekering', value: livePreview.insurance, color: '#8b5cf6' },
+                      { name: 'Belasting', value: livePreview.taxes, color: '#ef4444' },
+                      { name: 'Afschrijving', value: livePreview.depreciation, color: '#6b7280' },
+                      { name: 'Rente', value: livePreview.interest, color: '#ec4899' },
+                    ]}
+                    layout="vertical"
+                    margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
+                    <XAxis
+                      type="number"
+                      tick={{ fontSize: 10, fill: '#6b7280' }}
+                      tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      tick={{ fontSize: 10, fill: '#6b7280' }}
+                      width={80}
+                    />
+                    <Tooltip
+                      formatter={(value: number) =>
+                        `€${value.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}`
+                      }
+                      contentStyle={{
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '4px',
+                        fontSize: '11px',
+                      }}
+                    />
+                    <Bar dataKey="value" radius={[0, 2, 2, 0]}>
+                      {[
                         {
                           name: 'Brandstof',
                           value: livePreview.fuelCost,
@@ -893,286 +942,229 @@ export function Step3Parameters({ session, onComplete }: Step3Props) {
                         { name: 'Onderhoud', value: livePreview.maintenance, color: '#f59e0b' },
                         { name: 'Verzekering', value: livePreview.insurance, color: '#8b5cf6' },
                         { name: 'Belasting', value: livePreview.taxes, color: '#ef4444' },
-                        { name: 'Afschrijving', value: livePreview.depreciation, color: '#6b7280' },
+                        {
+                          name: 'Afschrijving',
+                          value: livePreview.depreciation,
+                          color: '#6b7280',
+                        },
                         { name: 'Rente', value: livePreview.interest, color: '#ec4899' },
-                      ]}
-                      layout="vertical"
-                      margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
-                      <XAxis
-                        type="number"
-                        tick={{ fontSize: 10, fill: '#6b7280' }}
-                        tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`}
-                      />
-                      <YAxis
-                        type="category"
-                        dataKey="name"
-                        tick={{ fontSize: 10, fill: '#6b7280' }}
-                        width={80}
-                      />
-                      <Tooltip
-                        formatter={(value: number) =>
-                          `€${value.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}`
-                        }
-                        contentStyle={{
-                          backgroundColor: '#ffffff',
-                          border: '1px solid #e5e7eb',
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                        }}
-                      />
-                      <Bar dataKey="value" radius={[0, 2, 2, 0]}>
-                        {[
-                          {
-                            name: 'Brandstof',
-                            value: livePreview.fuelCost,
-                            color: fuelTypeColors[formData.fuelType],
-                          },
-                          { name: 'Onderhoud', value: livePreview.maintenance, color: '#f59e0b' },
-                          { name: 'Verzekering', value: livePreview.insurance, color: '#8b5cf6' },
-                          { name: 'Belasting', value: livePreview.taxes, color: '#ef4444' },
-                          {
-                            name: 'Afschrijving',
-                            value: livePreview.depreciation,
-                            color: '#6b7280',
-                          },
-                          { name: 'Rente', value: livePreview.interest, color: '#ec4899' },
-                        ].map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                      ].map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
 
-                  {/* Cost Details Table */}
-                  <div className="mt-4 space-y-2 border-t border-gray-200 dark:border-gray-700 pt-3">
-                    <div className="flex justify-between items-center text-xs">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="h-2 w-2 rounded-full"
-                          style={{ backgroundColor: fuelTypeColors[formData.fuelType] }}
-                        />
-                        <span className="text-gray-600 dark:text-gray-400">Brandstof</span>
-                      </div>
-                      <span className="font-mono font-medium text-gray-900 dark:text-gray-100">
-                        €
-                        {livePreview.fuelCost.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}
-                      </span>
+                {/* Cost Details Table - More Compact */}
+                <div className="mt-2 space-y-1 border-t border-gray-200 dark:border-gray-700 pt-2">
+                  <div className="flex justify-between items-center text-[10px]">
+                    <div className="flex items-center gap-1.5">
+                      <div
+                        className="h-1.5 w-1.5 rounded-full"
+                        style={{ backgroundColor: fuelTypeColors[formData.fuelType] }}
+                      />
+                      <span className="text-gray-600 dark:text-gray-400">Brandstof</span>
                     </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-amber-500" />
-                        <span className="text-gray-600 dark:text-gray-400">Onderhoud</span>
-                      </div>
-                      <span className="font-mono font-medium text-gray-900 dark:text-gray-100">
-                        €
-                        {livePreview.maintenance.toLocaleString('nl-NL', {
-                          maximumFractionDigits: 0,
-                        })}
-                      </span>
+                    <span className="font-mono font-medium text-gray-900 dark:text-gray-100">
+                      €{livePreview.fuelCost.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-[10px]">
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                      <span className="text-gray-600 dark:text-gray-400">Onderhoud</span>
                     </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-purple-500" />
-                        <span className="text-gray-600 dark:text-gray-400">Verzekering</span>
-                      </div>
-                      <span className="font-mono font-medium text-gray-900 dark:text-gray-100">
-                        €
-                        {livePreview.insurance.toLocaleString('nl-NL', {
-                          maximumFractionDigits: 0,
-                        })}
-                      </span>
+                    <span className="font-mono font-medium text-gray-900 dark:text-gray-100">
+                      €
+                      {livePreview.maintenance.toLocaleString('nl-NL', {
+                        maximumFractionDigits: 0,
+                      })}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-[10px]">
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-1.5 w-1.5 rounded-full bg-purple-500" />
+                      <span className="text-gray-600 dark:text-gray-400">Verzekering</span>
                     </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-red-500" />
-                        <span className="text-gray-600 dark:text-gray-400">Belasting</span>
-                      </div>
-                      <span className="font-mono font-medium text-gray-900 dark:text-gray-100">
-                        €{livePreview.taxes.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}
-                      </span>
+                    <span className="font-mono font-medium text-gray-900 dark:text-gray-100">
+                      €
+                      {livePreview.insurance.toLocaleString('nl-NL', {
+                        maximumFractionDigits: 0,
+                      })}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-[10px]">
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                      <span className="text-gray-600 dark:text-gray-400">Belasting</span>
                     </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-gray-500" />
-                        <span className="text-gray-600 dark:text-gray-400">Afschrijving</span>
-                      </div>
-                      <span className="font-mono font-medium text-gray-900 dark:text-gray-100">
-                        €
-                        {livePreview.depreciation.toLocaleString('nl-NL', {
-                          maximumFractionDigits: 0,
-                        })}
-                      </span>
+                    <span className="font-mono font-medium text-gray-900 dark:text-gray-100">
+                      €{livePreview.taxes.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-[10px]">
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-1.5 w-1.5 rounded-full bg-gray-500" />
+                      <span className="text-gray-600 dark:text-gray-400">Afschrijving</span>
                     </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-pink-500" />
-                        <span className="text-gray-600 dark:text-gray-400">Rente</span>
-                      </div>
-                      <span className="font-mono font-medium text-gray-900 dark:text-gray-100">
-                        €
-                        {livePreview.interest.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}
-                      </span>
+                    <span className="font-mono font-medium text-gray-900 dark:text-gray-100">
+                      €
+                      {livePreview.depreciation.toLocaleString('nl-NL', {
+                        maximumFractionDigits: 0,
+                      })}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-[10px]">
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-1.5 w-1.5 rounded-full bg-pink-500" />
+                      <span className="text-gray-600 dark:text-gray-400">Rente</span>
                     </div>
-                    <div className="h-px bg-gray-200 dark:bg-gray-700 my-2" />
-                    <div className="flex justify-between items-center text-xs font-semibold">
-                      <span className="text-gray-900 dark:text-gray-100">Totaal / jaar</span>
-                      <span className="font-mono text-gray-900 dark:text-gray-100">
-                        €
-                        {livePreview.annualTotal.toLocaleString('nl-NL', {
-                          maximumFractionDigits: 0,
-                        })}
-                      </span>
-                    </div>
+                    <span className="font-mono font-medium text-gray-900 dark:text-gray-100">
+                      €{livePreview.interest.toLocaleString('nl-NL', { maximumFractionDigits: 0 })}
+                    </span>
+                  </div>
+                  <div className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
+                  <div className="flex justify-between items-center text-[10px] font-semibold">
+                    <span className="text-gray-900 dark:text-gray-100">Totaal / jaar</span>
+                    <span className="font-mono text-gray-900 dark:text-gray-100">
+                      €
+                      {livePreview.annualTotal.toLocaleString('nl-NL', {
+                        maximumFractionDigits: 0,
+                      })}
+                    </span>
                   </div>
                 </div>
-              </Card>
-            )}
+              </div>
+            </Card>
+          </div>
 
-            {/* Parameter Sensitivity Analysis */}
-            {hasValidData && (
-              <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-                <div className="border-b border-gray-200 dark:border-gray-700 px-4 py-2.5">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                    Kosten Impact Analyse
-                  </h3>
-                </div>
-                <div className="p-4 space-y-3">
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
-                    Welke parameters beïnvloeden uw TCO het meest?
-                  </p>
+          {/* Right: Parameter Sensitivity Analysis */}
+          <div>
+            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+              <div className="border-b border-gray-200 dark:border-gray-700 px-3 py-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Kosten Impact Analyse
+                </h3>
+              </div>
+              <div className="p-3 space-y-2">
+                <p className="text-[10px] text-gray-600 dark:text-gray-400">
+                  Welke parameters beïnvloeden uw TCO het meest?
+                </p>
 
-                  {/* Calculate sensitivity - which cost categories are largest */}
-                  {(() => {
-                    const costs = [
-                      {
-                        name: 'Brandstofkosten',
-                        value: livePreview.fuelCost,
-                        percent: (livePreview.fuelCost / livePreview.annualTotal) * 100,
-                        color: fuelTypeColors[formData.fuelType],
-                        tip: 'Grootste impact: verbruik optimaliseren en routeplanning',
-                      },
-                      {
-                        name: 'Afschrijving',
-                        value: livePreview.depreciation,
-                        percent: (livePreview.depreciation / livePreview.annualTotal) * 100,
-                        color: '#6b7280',
-                        tip: 'Impact beperken: hogere restwaarde en langere gebruiksduur',
-                      },
-                      {
-                        name: 'Onderhoud',
-                        value: livePreview.maintenance,
-                        percent: (livePreview.maintenance / livePreview.annualTotal) * 100,
-                        color: '#f59e0b',
-                        tip: 'Optimaliseren via preventief onderhoud en dealercontracten',
-                      },
-                      {
-                        name: 'Belastingen',
-                        value: livePreview.taxes,
-                        percent: (livePreview.taxes / livePreview.annualTotal) * 100,
-                        color: '#ef4444',
-                        tip: 'Beperkte controle: subsidies en fiscale voordelen benutten',
-                      },
-                      {
-                        name: 'Verzekering',
-                        value: livePreview.insurance,
-                        percent: (livePreview.insurance / livePreview.annualTotal) * 100,
-                        color: '#8b5cf6',
-                        tip: 'Optimaliseren via fleet-polissen en eigen risico',
-                      },
-                      {
-                        name: 'Rente',
-                        value: livePreview.interest,
-                        percent: (livePreview.interest / livePreview.annualTotal) * 100,
-                        color: '#ec4899',
-                        tip: 'Impact verkleinen: hogere aanbetaling of kortere looptijd',
-                      },
-                    ].sort((a, b) => b.value - a.value)
+                {/* Calculate sensitivity - which cost categories are largest */}
+                {(() => {
+                  const costs = [
+                    {
+                      name: 'Brandstofkosten',
+                      value: livePreview.fuelCost,
+                      percent: (livePreview.fuelCost / livePreview.annualTotal) * 100,
+                      color: fuelTypeColors[formData.fuelType],
+                      tip: 'Grootste impact: verbruik optimaliseren en routeplanning',
+                    },
+                    {
+                      name: 'Afschrijving',
+                      value: livePreview.depreciation,
+                      percent: (livePreview.depreciation / livePreview.annualTotal) * 100,
+                      color: '#6b7280',
+                      tip: 'Impact beperken: hogere restwaarde en langere gebruiksduur',
+                    },
+                    {
+                      name: 'Onderhoud',
+                      value: livePreview.maintenance,
+                      percent: (livePreview.maintenance / livePreview.annualTotal) * 100,
+                      color: '#f59e0b',
+                      tip: 'Optimaliseren via preventief onderhoud en dealercontracten',
+                    },
+                    {
+                      name: 'Belastingen',
+                      value: livePreview.taxes,
+                      percent: (livePreview.taxes / livePreview.annualTotal) * 100,
+                      color: '#ef4444',
+                      tip: 'Beperkte controle: subsidies en fiscale voordelen benutten',
+                    },
+                    {
+                      name: 'Verzekering',
+                      value: livePreview.insurance,
+                      percent: (livePreview.insurance / livePreview.annualTotal) * 100,
+                      color: '#8b5cf6',
+                      tip: 'Optimaliseren via fleet-polissen en eigen risico',
+                    },
+                    {
+                      name: 'Rente',
+                      value: livePreview.interest,
+                      percent: (livePreview.interest / livePreview.annualTotal) * 100,
+                      color: '#ec4899',
+                      tip: 'Impact verkleinen: hogere aanbetaling of kortere looptijd',
+                    },
+                  ].sort((a, b) => b.value - a.value)
 
-                    const topCost = costs[0]
+                  const topCost = costs[0]
 
-                    return (
-                      <div className="space-y-3">
-                        {/* Top 3 Impact Drivers */}
-                        {costs.slice(0, 3).map((cost, index) => (
-                          <div key={cost.name} className="space-y-1">
-                            <div className="flex items-center justify-between text-xs">
-                              <div className="flex items-center gap-2">
-                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 text-[10px] font-bold text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                                  {index + 1}
-                                </span>
-                                <span className="font-medium text-gray-900 dark:text-gray-100">
-                                  {cost.name}
-                                </span>
-                              </div>
-                              <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">
-                                {cost.percent.toFixed(0)}%
+                  return (
+                    <div className="space-y-2">
+                      {/* Top 3 Impact Drivers */}
+                      {costs.slice(0, 3).map((cost, index) => (
+                        <div key={cost.name} className="space-y-0.5">
+                          <div className="flex items-center justify-between text-[10px]">
+                            <div className="flex items-center gap-1.5">
+                              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-100 text-[9px] font-bold text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                {index + 1}
+                              </span>
+                              <span className="font-medium text-gray-900 dark:text-gray-100">
+                                {cost.name}
                               </span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
-                                <div
-                                  className="h-full rounded-full transition-all"
-                                  style={{
-                                    width: `${cost.percent}%`,
-                                    backgroundColor: cost.color,
-                                  }}
-                                />
-                              </div>
-                            </div>
-                            <p className="text-[10px] text-gray-500 dark:text-gray-400">
-                              💡 {cost.tip}
-                            </p>
+                            <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+                              {cost.percent.toFixed(0)}%
+                            </span>
                           </div>
-                        ))}
-
-                        {/* Business Insight */}
-                        {topCost && (
-                          <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-2.5 dark:border-blue-800 dark:bg-blue-950/20">
-                            <div className="mb-1 flex items-center gap-1.5">
-                              <TrendingUp className="h-3.5 w-3.5 text-blue-600" />
-                              <span className="text-[10px] font-semibold uppercase tracking-wide text-blue-900 dark:text-blue-100">
-                                Zakelijk Advies
-                              </span>
+                          <div className="flex items-center gap-1.5">
+                            <div className="h-1 flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                              <div
+                                className="h-full rounded-full transition-all"
+                                style={{
+                                  width: `${cost.percent}%`,
+                                  backgroundColor: cost.color,
+                                }}
+                              />
                             </div>
-                            <p className="text-xs text-blue-800 dark:text-blue-200">
-                              {topCost.name} vertegenwoordigt{' '}
-                              <strong>{topCost.percent.toFixed(0)}%</strong> van uw jaarlijkse
-                              kosten.{' '}
-                              {topCost.percent > 40 && (
-                                <strong>Focus hier op voor maximale kostenbesparing.</strong>
-                              )}
-                              {topCost.percent <= 40 && topCost.percent > 25 && (
-                                <>Optimalisatie kan aanzienlijke besparingen opleveren.</>
-                              )}
-                              {topCost.percent <= 25 && (
-                                <>Relatief gebalanceerde kostenverdeling.</>
-                              )}
-                            </p>
                           </div>
-                        )}
-                      </div>
-                    )
-                  })()}
-                </div>
-              </Card>
-            )}
+                          <p className="text-[9px] leading-tight text-gray-500 dark:text-gray-400">
+                            💡 {cost.tip}
+                          </p>
+                        </div>
+                      ))}
 
-            {/* Empty State */}
-            {!hasValidData && (
-              <Card className="border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                <div className="p-6 text-center">
-                  <Calculator className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Vul aankoopprijs en km/jaar in om een preview te zien
-                  </p>
-                </div>
-              </Card>
-            )}
+                      {/* Business Insight */}
+                      {topCost && (
+                        <div className="mt-2 rounded border border-blue-200 bg-blue-50 p-2 dark:border-blue-800 dark:bg-blue-950/20">
+                          <div className="mb-1 flex items-center gap-1">
+                            <TrendingUp className="h-3 w-3 text-blue-600" />
+                            <span className="text-[9px] font-semibold uppercase tracking-wide text-blue-900 dark:text-blue-100">
+                              Zakelijk Advies
+                            </span>
+                          </div>
+                          <p className="text-[10px] leading-snug text-blue-800 dark:text-blue-200">
+                            {topCost.name} vertegenwoordigt{' '}
+                            <strong>{topCost.percent.toFixed(0)}%</strong> van uw jaarlijkse kosten.{' '}
+                            {topCost.percent > 40 && (
+                              <strong>Focus hier op voor maximale kostenbesparing.</strong>
+                            )}
+                            {topCost.percent <= 40 && topCost.percent > 25 && (
+                              <>Optimalisatie kan aanzienlijke besparingen opleveren.</>
+                            )}
+                            {topCost.percent <= 25 && <>Relatief gebalanceerde kostenverdeling.</>}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
+              </div>
+            </Card>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
