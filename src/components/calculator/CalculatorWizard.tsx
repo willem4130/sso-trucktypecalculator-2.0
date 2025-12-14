@@ -57,12 +57,13 @@ export function CalculatorWizard() {
     }
   }, [session?.sessionKey, sessionKey])
 
-  // Sync current step with session
+  // Initialize step from session on first load only
   useEffect(() => {
-    if (session?.currentStep && session.currentStep !== currentStep) {
+    if (session?.currentStep && currentStep === 1 && session.currentStep !== 1) {
+      // Only sync on initial load if session has a saved step
       setCurrentStep(session.currentStep)
     }
-  }, [session?.currentStep])
+  }, [session?.sessionKey]) // Only run when session is created
 
   const handleNext = async () => {
     if (!sessionKey || currentStep >= 4) return
