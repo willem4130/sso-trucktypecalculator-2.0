@@ -446,20 +446,30 @@ npm run build      # Try build again
 - Empty state when no vehicle selected
 - Full desktop width (8/4 column split)
 
-✅ **Step 2: Driving Area Selection** (ENHANCED - Professional BI Dashboard)
+✅ **Step 2: Driving Area Selection** (ENHANCED - Business Decision Tool)
 
-- Left sidebar: Table-style area selection (4 areas)
-- Right dashboard: 3 KPI cards + 7 charts (Bar, Radar, Area, Process Flow, Netherlands Map)
-- **Progressive Disclosure**: View mode toggle (Simpel/Gedetailleerd/Expert)
-  - Simpel: Map + selection only
-  - Gedetailleerd: Full BI dashboard (DEFAULT)
-  - Expert: Everything + future advanced analytics
-- Charts: Bar (km/year), Radar (multi-dimensional), Area (cumulative), Process Flow
-- Real Netherlands GeoJSON map with coverage zones
-- Interactive: Hover states highlight across all visualizations
-- Professional aesthetic: Clean borders, muted colors, uppercase headers
+- **View Modes**: Overzicht (map only) / Analyse (full insights)
+- **Cost Estimation Cards**: Real-time annual cost estimates per area
+  - Fuel costs, toll costs, maintenance costs, total operational costs
+  - Instant preview as you hover over areas
+- **Infrastructure Readiness Analysis**:
+  - BEV charging infrastructure coverage (%)
+  - FCEV hydrogen station availability (%)
+  - Diesel/petrol station coverage
+  - Actionable recommendations per fuel type
+- **Operational Feasibility Score**: Data-driven feasibility analysis
+  - Complexity assessment (Low/Medium/High/Very High)
+  - Practical operational constraints
+  - Range requirements and charging infrastructure
+- **Business Recommendations**: ROI estimates per area/fuel combination
+  - Regionaal BEV: ROI 3-4 years
+  - Nationaal BEV/FCEV: ROI 4-5 years
+  - Nationaal+ FCEV/Diesel: ROI 5-6 years
+  - Internationaal Diesel/FCEV: ROI 6-7 years
+- Netherlands GeoJSON map with coverage zones
+- Professional BI styling: Clean, data-dense, actionable
 
-✅ **Step 3: Parameters** (ENHANCED - Live Cost Preview)
+✅ **Step 3: Parameters** (ENHANCED - Live Cost Preview + Sensitivity Analysis)
 
 - 6-tab form (Vehicle, Consumption, Taxes, Subsidies, Financial, Extra)
 - Smart defaults, auto-fill on fuel type change
@@ -470,17 +480,60 @@ npm run build      # Try build again
   - Detailed cost table with color-coded categories
   - Sticky sidebar follows scroll
   - Updates instantly on any parameter change
+- **Parameter Sensitivity Analysis** (NEW):
+  - Top 3 cost drivers ranked by impact (%)
+  - Visual impact bars showing relative contribution
+  - Business optimization tips per cost category
+  - Dynamic recommendations based on cost distribution
+  - "Focus here for maximum savings" guidance
+  - Example tips:
+    - Fuel costs: "Optimize consumption and route planning"
+    - Depreciation: "Higher residual value and longer usage"
+    - Maintenance: "Preventive maintenance and dealer contracts"
+    - Taxes: "Leverage subsidies and tax benefits"
+    - Insurance: "Fleet policies and deductible optimization"
+    - Interest: "Higher down payment or shorter term"
 
-✅ **Step 4: Results**
+✅ **Step 4: Results** (ENHANCED - Enterprise BI Analytics Dashboard)
 
-- 5 visualizations: TCO bar chart, Cost breakdown pie, CO2 emissions, Breakdown table
-- PDF export (jsPDF)
+- **Progressive Disclosure**: View mode toggle (Overzicht/Analyse/Expert)
+  - Overzicht: Simple cost comparison table
+  - Analyse: Full dashboard with charts (DEFAULT)
+  - Expert: Advanced analytics with radar charts
+- **Multi-Dimensional Filtering**:
+  - Fuel type multi-select (filter any combination of Diesel/BEV/FCEV/H2ICE)
+  - Visual toggle buttons with Eye/EyeOff icons
+  - Real-time data updates as filters change
+- **Sortable Analysis**:
+  - 3-state column sorting (asc/desc/none) with orange indicators
+  - Sort by: Total TCO, Cost/km, Fuel costs, CO2 emissions
+  - Click column headers to cycle through sort states
+- **Professional Visualizations**:
+  - 4 KPI cards: Lowest TCO, Avg annual cost, CO2 impact, Cost spread
+  - Sortable comparison table (7 cols) with conditional highlighting
+  - Stacked bar chart: Cost breakdown per fuel type (6 cost categories)
+  - Line chart: Annual cost progression over depreciation period
+  - Radar chart (Expert mode): Multi-dimensional performance comparison
+  - Environmental impact bars: CO2 comparison with color-coded bars
+  - Savings vs Diesel cards: Percentage and absolute savings
+- **Detailed Analysis**:
+  - Professional cost specification table with tabular numbers
+  - 6 cost categories + subsidy credit (green highlight)
+  - All values formatted for BI consumption (€1.234 format)
+- **Custom Export System**:
+  - **Export Dialog**: Checkbox selection for report sections
+  - **6 Export Sections**: KPIs, Comparison, Breakdown, Timeline, Detailed, Insights
+  - **Dual Format**: PDF and Excel export options
+  - **Custom Reports**: Select only needed sections for targeted reports
+  - **Professional Formatting**: Export uses BI-style formatting with branding
+- Professional styling: Uppercase headers, tabular numbers, muted colors, clean borders
 
 **Enhanced Roadmap (v2.1+):**
 
 ✅ **Progressive Disclosure** (COMPLETED)
 
 - ✅ View mode toggle in Step 2 (Simpel/Gedetailleerd/Expert)
+- ✅ View mode toggle in Step 4 (Overzicht/Analyse/Expert)
 - Future: Collapsible advanced sections in other steps
 - Future: Context-aware tooltips
 - Future: "Show calculations" expandable panels
@@ -516,6 +569,25 @@ npm run build      # Try build again
 - ✅ Comparison metrics (weight class, payload ratio)
 - ✅ Full desktop width utilization
 - Future: Real vehicle illustrations (currently placeholder)
+
+✅ **Step 4 BI Enhancement** (COMPLETED)
+
+- ✅ View mode toggle (Overzicht/Analyse/Expert) with progressive disclosure
+- ✅ Multi-dimensional fuel type filtering (multi-select with visual toggles)
+- ✅ Advanced sorting: 3-state column sorting on all metrics
+- ✅ Professional data visualizations: 8+ charts/tables with BI styling
+- ✅ Radar chart for multi-dimensional comparison (Expert mode)
+- ✅ Custom export system (PDF/Excel with section selection)
+
+✅ **Custom Export System** (COMPLETED)
+
+- ✅ Export dialog with checkbox selection for report sections
+- ✅ 6 export sections: KPIs, Comparison, Breakdown, Timeline, Detailed, Insights
+- ✅ Dual format support: PDF and Excel
+- ✅ Custom report generation: Select only needed sections
+- ✅ Professional BI-style formatting with SCEX branding
+- Future: Actual PDF generation with jsPDF (currently placeholder)
+- Future: Excel generation with SheetJS (currently placeholder)
 
 **Technical Implementation Notes:**
 

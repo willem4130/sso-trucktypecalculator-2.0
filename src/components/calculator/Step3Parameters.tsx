@@ -1030,6 +1030,135 @@ export function Step3Parameters({ session, onComplete }: Step3Props) {
               </Card>
             )}
 
+            {/* Parameter Sensitivity Analysis */}
+            {hasValidData && (
+              <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                <div className="border-b border-gray-200 dark:border-gray-700 px-4 py-2.5">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Kosten Impact Analyse
+                  </h3>
+                </div>
+                <div className="p-4 space-y-3">
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    Welke parameters beïnvloeden uw TCO het meest?
+                  </p>
+
+                  {/* Calculate sensitivity - which cost categories are largest */}
+                  {(() => {
+                    const costs = [
+                      {
+                        name: 'Brandstofkosten',
+                        value: livePreview.fuelCost,
+                        percent: (livePreview.fuelCost / livePreview.annualTotal) * 100,
+                        color: fuelTypeColors[formData.fuelType],
+                        tip: 'Grootste impact: verbruik optimaliseren en routeplanning',
+                      },
+                      {
+                        name: 'Afschrijving',
+                        value: livePreview.depreciation,
+                        percent: (livePreview.depreciation / livePreview.annualTotal) * 100,
+                        color: '#6b7280',
+                        tip: 'Impact beperken: hogere restwaarde en langere gebruiksduur',
+                      },
+                      {
+                        name: 'Onderhoud',
+                        value: livePreview.maintenance,
+                        percent: (livePreview.maintenance / livePreview.annualTotal) * 100,
+                        color: '#f59e0b',
+                        tip: 'Optimaliseren via preventief onderhoud en dealercontracten',
+                      },
+                      {
+                        name: 'Belastingen',
+                        value: livePreview.taxes,
+                        percent: (livePreview.taxes / livePreview.annualTotal) * 100,
+                        color: '#ef4444',
+                        tip: 'Beperkte controle: subsidies en fiscale voordelen benutten',
+                      },
+                      {
+                        name: 'Verzekering',
+                        value: livePreview.insurance,
+                        percent: (livePreview.insurance / livePreview.annualTotal) * 100,
+                        color: '#8b5cf6',
+                        tip: 'Optimaliseren via fleet-polissen en eigen risico',
+                      },
+                      {
+                        name: 'Rente',
+                        value: livePreview.interest,
+                        percent: (livePreview.interest / livePreview.annualTotal) * 100,
+                        color: '#ec4899',
+                        tip: 'Impact verkleinen: hogere aanbetaling of kortere looptijd',
+                      },
+                    ].sort((a, b) => b.value - a.value)
+
+                    const topCost = costs[0]
+
+                    return (
+                      <div className="space-y-3">
+                        {/* Top 3 Impact Drivers */}
+                        {costs.slice(0, 3).map((cost, index) => (
+                          <div key={cost.name} className="space-y-1">
+                            <div className="flex items-center justify-between text-xs">
+                              <div className="flex items-center gap-2">
+                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 text-[10px] font-bold text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                  {index + 1}
+                                </span>
+                                <span className="font-medium text-gray-900 dark:text-gray-100">
+                                  {cost.name}
+                                </span>
+                              </div>
+                              <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+                                {cost.percent.toFixed(0)}%
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                                <div
+                                  className="h-full rounded-full transition-all"
+                                  style={{
+                                    width: `${cost.percent}%`,
+                                    backgroundColor: cost.color,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                              💡 {cost.tip}
+                            </p>
+                          </div>
+                        ))}
+
+                        {/* Business Insight */}
+                        {topCost && (
+                          <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-2.5 dark:border-blue-800 dark:bg-blue-950/20">
+                            <div className="mb-1 flex items-center gap-1.5">
+                              <TrendingUp className="h-3.5 w-3.5 text-blue-600" />
+                              <span className="text-[10px] font-semibold uppercase tracking-wide text-blue-900 dark:text-blue-100">
+                                Zakelijk Advies
+                              </span>
+                            </div>
+                            <p className="text-xs text-blue-800 dark:text-blue-200">
+                              {topCost.name} vertegenwoordigt{' '}
+                              <strong>{topCost.percent.toFixed(0)}%</strong> van uw jaarlijkse
+                              kosten.{' '}
+                              {topCost.percent > 40 && (
+                                <strong>Focus hier op voor maximale kostenbesparing.</strong>
+                              )}
+                              {topCost.percent <= 40 && topCost.percent > 25 && (
+                                <>Optimalisatie kan aanzienlijke besparingen opleveren.</>
+                              )}
+                              {topCost.percent <= 25 && (
+                                <>Relatief gebalanceerde kostenverdeling.</>
+                              )}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
+                </div>
+              </Card>
+            )}
+
             {/* Empty State */}
             {!hasValidData && (
               <Card className="border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
